@@ -1,6 +1,7 @@
 import React from "react";
 import styles from "./Sidebar.module.css"; 
 import { isWmsLayer, buildLayerTypeMap, getStyle, layerGroupMap } from "./LayerStyleManager";
+import { HAMBURG_POI_CONFIG } from "./poiConfig";
 import { useTranslation } from 'next-i18next';
  
 
@@ -31,7 +32,7 @@ export default function LayerTagBar({ selectedLayers, toggleLayer, availableLaye
     uneven_surfaces: t('display_uneven'),
     poor_pavement: t('display_pavement'),
     kerbs_high: t('display_kerb_high'),
-    facility_wms: t('display_facility'),
+    facility_hh: t('display_facility'),
     pedestrian_flow_wms: t('display_pedestrian_flow'),
     trafic_light: t('display_traffic'),
     green_infrastructure: t('display_green_inf'),
@@ -85,6 +86,16 @@ export default function LayerTagBar({ selectedLayers, toggleLayer, availableLaye
     pedestrian_flow_wms: [t('layertag_flow_low'), t('layertag_flow_medium'), t('layertag_flow_high')]
   };
 
+  const poiLegendLabelByKey = {
+    poi_hh_gastronomy: t("leg_poi_gastronomy"),
+    poi_hh_haltstelle: t("leg_poi_haltstelle"),
+    poi_hh_health: t("leg_poi_health"),
+    poi_hh_kita_schule: t("leg_poi_education"),
+    poi_hh_uni_fh: t("leg_poi_education"),
+    poi_hh_park_spiel: t("leg_poi_park_spiel"),
+    poi_hh_supermarket: t("leg_poi_supermarket")
+  };
+
   // icon for wms layers
   const iconUrls = {
     tree_wms: [
@@ -102,14 +113,6 @@ export default function LayerTagBar({ selectedLayers, toggleLayer, availableLaye
     ],
     transport_station_wms: ["/images/transport-station.png"],
     wc_disabled: ["/images/wc.png"],
-    facility_wms: [
-      "/images/facility_culturcenter_burgerhaus.png",
-      "/images/facility_film_theater.png",
-      "/images/facility_museen.png",
-      "/images/facility_musik_ausstellung.png", 
-      "/images/facility_religioss.png",
-      "/images/facility_weiterbildung.png",
-      "/images/facility_spezialbibliotheken.png",], 
   };
 
   const wmsColorPalette = {
@@ -142,17 +145,52 @@ export default function LayerTagBar({ selectedLayers, toggleLayer, availableLaye
       t('layertag_green_5'),
       t('layertag_green_6'),
       t('layertag_green_7')
-    ],
-    facility_wms: [
-      t('layertag_facility_0'),
-      t('layertag_facility_1'),
-      t('layertag_facility_2'),
-      t('layertag_facility_3'),
-      t('layertag_facility_4'),
-      t('layertag_facility_5'),
-      t('layertag_facility_6')
     ]
     // noise_wms: ["Noise Levels"]
+  };
+
+  const facilitiesLegendItems = Array.from(
+    new Map(
+      HAMBURG_POI_CONFIG.map((item) => [
+        `${poiLegendLabelByKey[item.key] || item.label}-${item.color}`,
+        {
+          label: poiLegendLabelByKey[item.key] || item.label,
+          color: item.color
+        }
+      ])
+    ).values()
+  );
+  const facilityPalette = {
+    facility_hh: facilitiesLegendItems.map((item) => item.color)
+  };
+  const facilityLabels = {
+    facility_hh: facilitiesLegendItems.map((item) => item.label)
+  };
+  const dotLegendConfigs = [
+    { palette: flowPalette, labels: flowLabels, borderColor: "#999" },
+    { palette: tempPalette, labels: tempLabels, borderColor: "#999" },
+    { palette: slopePalette, labels: slopeLabels, borderColor: "#999" },
+    { palette: facilityPalette, labels: facilityLabels, borderColor: "#3A3A3A" }
+  ];
+  const renderDotLegend = (layer) => {
+    const dotConfig = dotLegendConfigs.find(({ palette }) => palette[layer]);
+    if (!dotConfig) return null;
+    return dotConfig.palette[layer].map((color, i) => (
+      <div key={`${layer}-${i}`} className={styles.layerTagLegendItem}>
+        <div
+          style={{
+            width: "14px",
+            height: "14px",
+            borderRadius: "50%",
+            backgroundColor: color,
+            border: `1px solid ${dotConfig.borderColor}`
+          }}
+          aria-hidden="true"
+          role="presentation"
+        />
+        <span style={{ color: "#3A3A3A" }}>{dotConfig.labels[layer][i]}</span>
+      </div>
+    ));
   };
 
   if (!selectedLayers || selectedLayers.length === 0) return null;
@@ -170,7 +208,10 @@ export default function LayerTagBar({ selectedLayers, toggleLayer, availableLaye
           role="listitem"
         >
           {/* map layer name */}
-          <div className={styles.layerTagText}>
+          <div
+            className={styles.layerTagText}
+            style={layer === "facility_hh" ? { color: "#3A3A3A" } : undefined}
+          >
             {displayNames[layer] || layer}
             <button
               type="button"
@@ -190,58 +231,8 @@ export default function LayerTagBar({ selectedLayers, toggleLayer, availableLaye
 
           {/* legend for each layer */}
           <div>
-            {flowPalette[layer] ? (
-              flowPalette[layer].map((color, i) => (
-                <div key={`${layer}-flow-${i}`} className={styles.layerTagLegendItem}>
-                  <div
-                    style={{
-                      width: "14px",
-                      height: "14px",
-                      borderRadius: "50%",
-                      backgroundColor: color,
-                      border: "1px solid #999"
-                    }}
-                    aria-hidden="true"
-                    role="presentation"
-                  />
-                  <span>{flowLabels[layer][i]}</span>
-                </div>
-              ))
-            ) :tempPalette[layer] ? (
-              tempPalette[layer].map((color, i) => (    // legend for temperature layers
-                <div key={`${layer}-${i}`} className={styles.layerTagLegendItem}>
-                  <div
-                    style={{
-                      width: "14px",
-                      height: "14px",
-                      borderRadius: "50%",
-                      backgroundColor: color,
-                      border: "1px solid #999"
-                    }}
-                    aria-hidden="true"
-                    role="presentation"
-                  />
-                  <span>{tempLabels[layer][i]}</span>
-                </div>
-              ))
-            ) :slopePalette[layer] ? (
-              slopePalette[layer].map((color, i) => (    // legend for slope layers
-                <div key={`${layer}-${i}`} className={styles.layerTagLegendItem}>
-                  <div
-                    style={{
-                      width: "14px",
-                      height: "14px",
-                      borderRadius: "50%",
-                      backgroundColor: color,
-                      border: "1px solid #999"
-                    }}
-                    aria-hidden="true"
-                    role="presentation"
-                  />
-                  <span>{slopeLabels[layer][i]}</span>
-                </div>
-              ))
-            ) : isWmsLayer(layer, layerTypeMap) ? (
+            {renderDotLegend(layer) || (
+              isWmsLayer(layer, layerTypeMap) ? (
               iconUrls[layer]                           // legend with icons
                 ? iconUrls[layer].map((url, i) => (
                     <div key={`${layer}-icon-${i}`} className={styles.layerTagLegendItem}>
@@ -251,7 +242,7 @@ export default function LayerTagBar({ selectedLayers, toggleLayer, availableLaye
                         aria-hidden="true"
                         className={styles.layerTagIcon}
                       />
-                      <span>{wmsLabels[layer]?.[i] || `Item ${i + 1}`}</span>
+                      <span style={{ color: "#3A3A3A" }}>{wmsLabels[layer]?.[i] || `Item ${i + 1}`}</span>
                     </div>
                   ))
                 : (wmsColorPalette[layer] || ["#ccc"])  // legend with only colors
@@ -268,7 +259,7 @@ export default function LayerTagBar({ selectedLayers, toggleLayer, availableLaye
                           aria-hidden="true"
                           role="presentation"
                         />
-                        <span>{wmsLabels[layer]?.[i] || `Item ${i + 1}`}</span>
+                        <span style={{ color: "#3A3A3A" }}>{wmsLabels[layer]?.[i] || `Item ${i + 1}`}</span>
                       </div>
                     ))
             ) : (
@@ -285,8 +276,9 @@ export default function LayerTagBar({ selectedLayers, toggleLayer, availableLaye
                   aria-hidden="true"
                   role="presentation"
                 />
-                <span>{displayNames[layer] || "GeoJSON Layer"}</span>
+                <span style={{ color: "#3A3A3A" }}>{displayNames[layer] || "GeoJSON Layer"}</span>
               </div>
+            )
             )}
           </div>
 

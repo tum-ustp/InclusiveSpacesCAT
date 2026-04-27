@@ -27,7 +27,7 @@ export const cityLayerConfig = {
       { key: "uneven_surfaces", type: "geojson" },
       { key: "poor_pavement", type: "geojson" },
       { key: "kerbs_high", type: "geojson" },
-      { key: "facility_wms", type: "wms" },
+      { key: "facility_hh", type: "geojson" },
       { key: "pedestrian_flow_wms", type: "wms" }
     ]
   },

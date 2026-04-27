@@ -9,6 +9,7 @@ if (typeof window !== "undefined") {
   useMap = require("react-leaflet").useMap;
 }
 import { useEffect } from "react";
+import { HAMBURG_FACILITY_POI_COLORS } from "./poiConfig";
 
 // layer grounp for tactile guidance
 export const layerGroupMap = {
@@ -199,9 +200,23 @@ export function getStyle(layer, feature) {
         stroke: false
       };
     case "facilities":
+    case "facility_hh":
       return {
         radius: 5,
-        fillColor: "#e377c2",
+        fillColor: "#E377C2",
+        fillOpacity: 0.8,
+        stroke: false
+      };
+    case "poi_hh_gastronomy":
+    case "poi_hh_haltstelle":
+    case "poi_hh_health":
+    case "poi_hh_kita_schule":
+    case "poi_hh_park_spiel":
+    case "poi_hh_supermarket":
+    case "poi_hh_uni_fh":
+      return {
+        radius: 5,
+        fillColor: HAMBURG_FACILITY_POI_COLORS[layer] || "#E377C2",
         fillOpacity: 0.8,
         stroke: false
       };
@@ -364,7 +379,6 @@ export const wmsLayerComponents = {
   blue_infrastructure_wms: BlueInfWMSLayer,
   green_infrastructure_wms: GreenInfWMSLayer,
   transport_station_wms: StationWMSLayer,
-  facility_wms: FacilityWMSLayer,
   pedestrian_flow_wms: PedestrianFlowWMSLayer
 };
 

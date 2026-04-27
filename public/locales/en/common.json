@@ -229,7 +229,6 @@
   "leg_poi_kita_schule": "Kindergartens & Schools",
   "leg_poi_park_spiel": "Parks & Playgrounds",
   "leg_poi_supermarket": "Supermarkets",
-  "leg_poi_uni_fh": "Universities",
   "leg_poi_education": "Education",
   "leg_poi_library": "Library",
   "leg_poi_music_exhibition": "Music / Exhibition",
@@ -419,10 +418,10 @@
       "desc": "This dataset highlights street crossings or edges where kerb height exceeds accessibility-friendly standards. The data was extracted from OpenStreetMap features tagged with 'kerb=raised' or similar attributes that indicate elevated borders impeding wheelchair passage.",
       "source": "OpenStreetMap, 2025"
     },
-    "facility_wms": {
+    "facility_hh": {
       "title": "Public Facilities",
       "desc": "This dataset includes facilities related to education and culture, such as cinemas, theaters, museums, music venues, exhibition spaces, community cultural centers, civic halls, specialized libraries, adult education centers, and religious communities. ",
-      "source": "Geoportal Hamburg (Bildung und Kultur Eimsbüttel Hamburg)"
+      "source": "OpenStreetMap, 2025"
     },
     "facilities": {
       "title": "Facilities",

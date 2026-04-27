@@ -6,6 +6,7 @@ import proj4 from "proj4";
 import Legend from "./Legend";
 import sty from './MapComponent.module.css'; 
 import {getStyle, useCircleMarker,isWmsLayer, buildLayerTypeMap, layerGroupMap, wmsLayerComponents} from "./LayerStyleManager"; 
+import { HAMBURG_FACILITY_POI_LAYERS } from "./poiConfig";
 import { useTranslation } from "next-i18next";
 
 // Dynamic import for react-leaflet
@@ -66,6 +67,10 @@ const MapComponent = ({
 
   const layerTypeMap = useMemo(
     () => buildLayerTypeMap(availableLayers),
+    [availableLayers]
+  );
+  const availableLayerKeys = useMemo(
+    () => new Set((availableLayers || []).map((l) => l.key)),
     [availableLayers]
   );
 
@@ -190,7 +195,14 @@ const MapComponent = ({
     const loadGeoJsonData = async () => {
       const newGeoJsonData = {};
 
-      const expandedLayers = selectedLayers.flatMap(layer => {
+      const filteredSelectedLayers = selectedLayers.filter((layer) =>
+        availableLayerKeys.has(layer)
+      );
+
+      const expandedLayers = filteredSelectedLayers.flatMap(layer => {
+        if (selectedCity === "hamburg" && layer === "facility_hh") {
+          return HAMBURG_FACILITY_POI_LAYERS;
+        }
         return layerGroupMap[layer] || [layer]; // Expand the tactile_guidance and other grouped layers
       });
 
@@ -198,7 +210,10 @@ const MapComponent = ({
         if (isWmsLayer(layer, layerTypeMap)) continue;
 
         try {
-          const res = await fetch(`/data/${selectedCity}/${layer}.geojson`);
+          const filePath = layer.startsWith("poi_")
+            ? `/data/POI/${layer}.geojson`
+            : `/data/${selectedCity}/${layer}.geojson`;
+          const res = await fetch(filePath);
           const data = await res.json();
           newGeoJsonData[layer] = data;
         } catch (err) {
@@ -206,11 +221,19 @@ const MapComponent = ({
         }
       }
 
-      setGeoJsonData(newGeoJsonData);
+      setGeoJsonData((prev) => {
+        const preservedPoiData = Object.fromEntries(
+          Object.entries(prev).filter(([key]) => key.startsWith("poi_"))
+        );
+        return {
+          ...preservedPoiData,
+          ...newGeoJsonData
+        };
+      });
     };
 
     loadGeoJsonData();
-  }, [selectedLayers, selectedCity, layerTypeMap]);
+   }, [selectedLayers, selectedCity, layerTypeMap, availableLayerKeys]);
   
   // Fetch accessibility data from the backend 
   const fetchAccessibilityFromBackend = async (lat, lon, time, speed, variableSettings, signal) => {
@@ -257,15 +280,7 @@ const MapComponent = ({
 
   // POI/amenities summary in catchment area
   const POI_LAYER_CONFIG = {
-    hamburg: [
-      "poi_hh_gastronomy",
-      "poi_hh_haltstelle",
-      "poi_hh_health",
-      "poi_hh_kita_schule",
-      "poi_hh_park_spiel",
-      "poi_hh_supermarket",
-      "poi_hh_uni_fh"
-    ],
+    hamburg: HAMBURG_FACILITY_POI_LAYERS,
     penteli: [
       "poi_pt_education",
       "poi_pt_gastronomy",
@@ -727,8 +742,16 @@ const MapComponent = ({
         })}
 
         {/* Render Geojson Layers based on selectedLayers*/}
-        {Object.entries(geoJsonData).map(([layer, data]) => (
-          layer.startsWith("poi_") && !selectedLayers.includes(layer) ? null : (
+        {Object.entries(geoJsonData).map(([layer, data]) => {
+          const isPoiLayer = layer.startsWith("poi_");
+          const isHamburgFacilityPoiVisible =
+            selectedCity === "hamburg" &&
+            selectedLayers.includes("facility_hh") &&
+            HAMBURG_FACILITY_POI_LAYERS.includes(layer);
+          if (isPoiLayer && !selectedLayers.includes(layer) && !isHamburgFacilityPoiVisible) {
+            return null;
+          }
+          return (
             <GeoJSON
               key={layer}
               data={data}
@@ -739,7 +762,7 @@ const MapComponent = ({
               style={(feature) => getStyle(layer, feature)}
             />
           )
-        ))}
+        })}
 
         {/* Legend */}
         <Legend 

@@ -229,7 +229,6 @@
   "leg_poi_kita_schule": "Kitas & Schulen",
   "leg_poi_park_spiel": "Parks & Spielplätze",
   "leg_poi_supermarket": "Supermärkte",
-  "leg_poi_uni_fh": "Universitäten",
   "leg_poi_education": "Bildung",
   "leg_poi_library": "Bibliothek",
   "leg_poi_music_exhibition": "Musik / Ausstellung",
@@ -419,10 +418,10 @@
       "desc": "Dieser Datensatz zeigt Straßenübergänge oder Bordsteinkanten mit erhöhter Bordhöhe, die die barrierefreie Zugänglichkeit einschränken können. Die Daten wurden aus OpenStreetMap-Tags wie 'kerb=raised' extrahiert.",
       "source": "OpenStreetMap, 2025"
     },
-    "facility_wms": {
+    "facility_hh": {
       "title": "Bildungs- und Kultureinrichtungen",
       "desc": "Dieser Datensatz enthält Einrichtungen im Bereich Bildung und Kultur, darunter Kinos, Theater, Museen, Musikstätten, Ausstellungsräume, Stadtteilkulturzentren, Bürgerhäuser, Spezialbibliotheken, Weiterbildungseinrichtungen und religiöse Gemeinschaften.",
-      "source": "Geoportal Hamburg (Bildung und Kultur)"
+      "source": "OpenStreetMap, 2025"
     },
     "facilities": {
       "title": "Einrichtungen",

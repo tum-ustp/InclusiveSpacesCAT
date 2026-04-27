@@ -211,7 +211,7 @@ export default function MapLayers({ selectedLayers, toggleLayer, availableLayers
           onToggle={() => toggleCategory("psy")}
           sty={sty}
         >
-          {findLayer("facility_wms") && renderCheckbox(findLayer("facility_wms"), t('display_facility'))}
+          {findLayer("facility_hh") && renderCheckbox(findLayer("facility_hh"), t('display_facility'))}
           {findLayer("facilities") && renderCheckbox(findLayer("facilities"), t('display_facility'))}
           {findLayer("pedestrian_flow_wms") && renderCheckbox(findLayer("pedestrian_flow_wms"), t('display_pedestrian_flow'))}
           {findLayer("pedestrian_flow") && renderCheckbox(findLayer("pedestrian_flow"), t('display_pedestrian_flow'))}
