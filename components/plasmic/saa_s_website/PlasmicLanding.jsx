@@ -298,6 +298,13 @@ export default function PlasmicLanding() {
                     huashu.zhan@tum.de
                   </a>
                 </div>
+
+                <div className={sty.contactLine}>
+                  <span className={sty.contactName}>{t("landing_contact_rita")}</span>
+                  <a className={sty.contactEmail} href="mailto:margarita.zykova@tum.de">
+                    margarita.zykova@tum.de
+                  </a>
+                </div>
               </div>
             </div>
           </div>
