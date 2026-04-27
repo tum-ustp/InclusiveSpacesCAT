@@ -7,7 +7,7 @@ export const HAMBURG_POI_CONFIG = [
   { key: "poi_hh_kita_schule", color: "#C9B8E4", label: "Educational facilities" },
   { key: "poi_hh_uni_fh", color: "#C9B8E4", label: "Educational facilities" },
   { key: "poi_hh_park_spiel", color: "#5F9F70", label: "Parks & playgrounds" },
-  { key: "poi_hh_supermarket", color: "#E6BF96", label: "Supermarkets" }
+  { key: "poi_hh_supermarket", color: "#f6bb7d", label: "Supermarkets" }
 ];
 
 export const HAMBURG_FACILITY_POI_LAYERS = HAMBURG_POI_CONFIG.map((item) => item.key);
