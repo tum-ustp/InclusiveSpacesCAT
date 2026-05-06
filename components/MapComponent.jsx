@@ -17,6 +17,8 @@ const MapLib = dynamic(
 
 proj4.defs("EPSG:4326", "+proj=longlat +datum=WGS84 +no_defs");
 proj4.defs("EPSG:25832", "+proj=utm +zone=32 +ellps=WGS84 +datum=WGS84 +units=m +no_defs");
+
+const EXCLUDED_HAMBURG_FACILITY_POI = "poi_hh_haltstelle";
  
 const MapComponent = ({ 
   cityCenter = [53.5503, 9.9920],
@@ -201,7 +203,9 @@ const MapComponent = ({
 
       const expandedLayers = filteredSelectedLayers.flatMap(layer => {
         if (selectedCity === "hamburg" && layer === "facility_hh") {
-          return HAMBURG_FACILITY_POI_LAYERS;
+          return HAMBURG_FACILITY_POI_LAYERS.filter(
+            (poiLayer) => poiLayer !== EXCLUDED_HAMBURG_FACILITY_POI
+          );
         }
         return layerGroupMap[layer] || [layer]; // Expand the tactile_guidance and other grouped layers
       });
@@ -280,7 +284,9 @@ const MapComponent = ({
 
   // POI/amenities summary in catchment area
   const POI_LAYER_CONFIG = {
-    hamburg: HAMBURG_FACILITY_POI_LAYERS,
+    hamburg: HAMBURG_FACILITY_POI_LAYERS.filter(
+      (poiLayer) => poiLayer !== EXCLUDED_HAMBURG_FACILITY_POI
+    ),
     penteli: [
       "poi_pt_education",
       "poi_pt_gastronomy",
@@ -743,6 +749,9 @@ const MapComponent = ({
 
         {/* Render Geojson Layers based on selectedLayers*/}
         {Object.entries(geoJsonData).map(([layer, data]) => {
+          if (selectedCity === "hamburg" && layer === EXCLUDED_HAMBURG_FACILITY_POI) {
+            return null;
+          }
           const isPoiLayer = layer.startsWith("poi_");
           const isHamburgFacilityPoiVisible =
             selectedCity === "hamburg" &&
