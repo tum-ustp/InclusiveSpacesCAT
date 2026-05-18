@@ -155,6 +155,33 @@ const nWeights = Number.isFinite(nInt) && nInt > 0 ? nInt : 1; //number of weigh
             r.target_agg_cost IS NOT NULL
             AND r.target_agg_cost + r.adjusted_cost <= $2::float
           )
+      ),
+      -- Build payload geometry separately so we can apply a display-only fallback
+      -- when the response would be too large for frontend rendering.
+      display_roads AS (
+        SELECT
+          fr.gid,
+          fr.the_geom,
+          COALESCE(ST_NPoints(fr.the_geom), 0) AS geom_points
+        FROM final_roads fr
+      ),
+      payload_stats AS (
+        SELECT
+          COUNT(*)::int AS feature_count,
+          COALESCE(SUM(geom_points), 0)::bigint AS total_points
+        FROM display_roads
+      ),
+      geometry_for_output AS (
+        SELECT
+          d.gid,
+          CASE
+            -- fallback for very dense payloads; tiny tolerance keeps overal arcs/shape
+            WHEN s.total_points > 45000 OR s.feature_count > 3500
+              THEN ST_SimplifyPreserveTopology(d.the_geom, 0.00003)
+            ELSE d.the_geom
+          END AS geom
+        FROM display_roads d
+        CROSS JOIN payload_stats s
       )
       SELECT json_build_object(
         'type', 'FeatureCollection',
@@ -162,14 +189,14 @@ const nWeights = Number.isFinite(nInt) && nInt > 0 ? nInt : 1; //number of weigh
           json_agg(
             json_build_object(
               'type', 'Feature',
-              'geometry', ST_AsGeoJSON(fr.the_geom)::json,
-              'properties', json_build_object('gid', fr.gid)
+              'geometry', ST_AsGeoJSON(go.geom)::json,
+              'properties', json_build_object('gid', go.gid)
             )
           ),
           '[]'::json
         )
       ) AS geojson
-      FROM final_roads fr
+      FROM geometry_for_output go
     `, [startVid, 
         maxDistance, 
         noiseVariable, 

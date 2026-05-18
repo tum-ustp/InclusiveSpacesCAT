@@ -46,7 +46,6 @@ const MapComponent = ({
 }) => {
   const [MapModule, setMapModule] = useState(null);
   const [customMarkerIcon, setCustomMarkerIcon] = useState(null);
-  const [reachableRoadsData, setReachableRoadsData] = useState([]); 
   const [reachableHullData, setReachableHullData] = useState([]); 
   const [geoJsonData, setGeoJsonData] = useState({}); 
   const [isCalculating, setIsCalculating] = useState(false); // function attachment calculation works? 
@@ -131,6 +130,18 @@ const MapComponent = ({
     Array.isArray(geojson.features) &&
     geojson.features.length > 0;
 
+  // Unified buffer/simplify profile for all cities.
+  // It adapts to input size (number of reachable road segments), not city id.
+  const getContourSettings = (featureCount) => {
+    if (featureCount > 4000) {
+      return { tolerance: 0.00014, highQuality: false, steps: 12 };
+    }
+    if (featureCount > 1500) {
+      return { tolerance: 0.0001, highQuality: false, steps: 14 };
+    }
+    return { tolerance: 0.00007, highQuality: true, steps: 16 };
+  };
+
   const colorPool = [
     "#f53c16", "#584898", "#c69a43 ", "#0fa321", "#924467"
   ]; // color pool for different calculation results/ accessibility analysis
@@ -182,7 +193,6 @@ const MapComponent = ({
   // clean "get catchment area" result
   useEffect(() => {
     if (clearTrigger) {
-      setReachableRoadsData([]);
       setReachableHullData([]);
       setResultMetadata([]);
       setDefaultGroupIndex([]);
@@ -395,12 +405,18 @@ const MapComponent = ({
           }
           const defaultRoads = defaultRes.roads.features;
           const fc = turf.featureCollection(defaultRoads);
+          const contourSettings = getContourSettings(defaultRoads.length);
 
           const combined = turf.combine(fc);
-          // Keep full line detail before buffering to avoid straightened hull contours.
-          const simplified = combined;
+          const simplified = turf.simplify(combined, {
+            tolerance: contourSettings.tolerance,
+            highQuality: contourSettings.highQuality
+          });
           
-          const buffered = turf.buffer(simplified, bufferDistance, { units: "kilometers", steps: 24 });
+          const buffered = turf.buffer(simplified, bufferDistance, {
+            units: "kilometers",
+            steps: contourSettings.steps
+          });
           const cleaned = {
             type: "FeatureCollection",
             features: buffered.features.map(f => {
@@ -420,7 +436,6 @@ const MapComponent = ({
           defaultArea = area / 10000;
 
           setDefaultResultCache(prev => ({ ...prev, [key]: { roads: defaultRes.roads, hull: cleaned, area: defaultArea } }));
-          setReachableRoadsData(prev => [...prev, defaultRes.roads]);
           setReachableHullData(prev => [...prev, cleaned]);
  
           const { poiGroupCounts, totalPOI } = countPoisInArea(cleaned);
@@ -462,12 +477,18 @@ const MapComponent = ({
             return;
           }
           const weightedRoads = weightedRes.roads.features;
+          const contourSettings2 = getContourSettings(weightedRoads.length);
 
           const fc2 = turf.featureCollection(weightedRoads);
           const combined2 = turf.combine(fc2);
-          // Keep full line detail before buffering to avoid straightened hull contours.
-          const simplified2 = combined2;
-          const buffered2 = turf.buffer(simplified2, bufferDistance, { units: "kilometers", steps: 24 });
+          const simplified2 = turf.simplify(combined2, {
+            tolerance: contourSettings2.tolerance,
+            highQuality: contourSettings2.highQuality
+          });
+          const buffered2 = turf.buffer(simplified2, bufferDistance, {
+            units: "kilometers",
+            steps: contourSettings2.steps
+          });
           const cleaned2 = {
             type: "FeatureCollection",
             features: buffered2.features.map(f => {
@@ -489,7 +510,6 @@ const MapComponent = ({
           const ratio = (weightedArea / defaultArea).toFixed(2);
           const color = colorPool[resultMetadata.length % colorPool.length];
 
-          setReachableRoadsData(prev => [...prev, weightedRes.roads]);
           setReachableHullData(prev => [...prev, cleaned2]);
  
           const { poiGroupCounts, totalPOI } = countPoisInArea(cleaned2);
@@ -785,20 +805,7 @@ const MapComponent = ({
           onFocusArea={handleFocusArea}
         />
  
-        {/* Render reachable roads and hulls */}
-        {reachableRoadsData.map((roads, i) =>
-          isValidGeoJSON(roads) ? (
-            <GeoJSON
-              key={`roads-${i}`}
-              data={roads}
-              style={{
-                color: resultMetadata[i]?.color || '#413190',
-                weight: 0.5,
-                opacity: 0.8
-              }}
-            />
-          ) : null
-        )}
+        {/* Render reachable hulls */}
         {reachableHullData.map((hull, i) =>
           isValidGeoJSON(hull) ? (
             <GeoJSON
