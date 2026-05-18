@@ -367,7 +367,7 @@ const MapComponent = ({
 
         const bufferDistance = selectedCity === "penteli" ? 0.1 : 0.02;
 
-        // --------- Step 1: Default Reslut (only speed/time/start) ---------
+        // --------- Step 1: Default Result (only speed/time/start) ---------
         if (!defaultResultCache[key]) {
           const newGroupIndex = Object.keys(groupMapping).length + 1;
           setGroupMapping(prev => ({ ...prev, [key]: newGroupIndex }));
@@ -397,9 +397,10 @@ const MapComponent = ({
           const fc = turf.featureCollection(defaultRoads);
 
           const combined = turf.combine(fc);
-          const simplified = turf.simplify(combined, { tolerance: 0.002, highQuality: false });
+          // Keep full line detail before buffering to avoid straightened hull contours.
+          const simplified = combined;
           
-          const buffered = turf.buffer(simplified, bufferDistance, { units: "kilometers" });
+          const buffered = turf.buffer(simplified, bufferDistance, { units: "kilometers", steps: 24 });
           const cleaned = {
             type: "FeatureCollection",
             features: buffered.features.map(f => {
@@ -446,7 +447,11 @@ const MapComponent = ({
         }
 
         // --------- Step 2: Weighted Result (with comfort features) ---------
-        if (enabledVariables.length > 0) {
+        const weightedEqualsDefault =
+          enabledVariables.length > 0 &&
+          enabledVariables.every((layer) => Number(layerValues?.[layer] ?? 1) === 1);
+
+        if (enabledVariables.length > 0 && !weightedEqualsDefault) {
           const weightedRes = await fetchAccessibilityFromBackend(lat, lon, walkingTime, walkingSpeed, layerValues, controller.signal);
           if (!weightedRes || !weightedRes.roads) {
             alert(t("err_api_failed_try_again"));
@@ -460,8 +465,9 @@ const MapComponent = ({
 
           const fc2 = turf.featureCollection(weightedRoads);
           const combined2 = turf.combine(fc2);
-          const simplified2 = turf.simplify(combined2, { tolerance: 0.002, highQuality: false });
-          const buffered2 = turf.buffer(simplified2, bufferDistance, { units: "kilometers" });
+          // Keep full line detail before buffering to avoid straightened hull contours.
+          const simplified2 = combined2;
+          const buffered2 = turf.buffer(simplified2, bufferDistance, { units: "kilometers", steps: 24 });
           const cleaned2 = {
             type: "FeatureCollection",
             features: buffered2.features.map(f => {
@@ -780,7 +786,7 @@ const MapComponent = ({
         />
  
         {/* Render reachable roads and hulls */}
-        {/* {reachableRoadsData.map((roads, i) =>
+        {reachableRoadsData.map((roads, i) =>
           isValidGeoJSON(roads) ? (
             <GeoJSON
               key={`roads-${i}`}
@@ -792,7 +798,7 @@ const MapComponent = ({
               }}
             />
           ) : null
-        )} */}
+        )}
         {reachableHullData.map((hull, i) =>
           isValidGeoJSON(hull) ? (
             <GeoJSON

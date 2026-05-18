@@ -63,19 +63,8 @@ const nWeights = Number.isFinite(nInt) && nInt > 0 ? nInt : 1; //number of weigh
     const pedestrianFlowVariable = parseFloat(req.query.pedestrianFlow) || 1.0;
  
     const result = await pool.query(`
-      SELECT json_build_object(
-        'type', 'FeatureCollection',
-        'features', json_agg(
-          json_build_object(
-            'type', 'Feature',
-            'geometry', ST_AsGeoJSON(w.the_geom)::json,
-            'properties', json_build_object('gid', w.gid)
-          )
-        )
-      ) AS geojson
-      FROM ${waysTable} w
-      WHERE gid IN (
-        SELECT edge
+      WITH dd AS (
+        SELECT *
         FROM pgr_drivingDistance(
           'SELECT gid AS id, source, target, 
             cost / GREATEST(
@@ -106,7 +95,81 @@ const nWeights = Number.isFinite(nInt) && nInt > 0 ? nInt : 1; //number of weigh
           $2::float,
           false::boolean
         )
+      ),
+      reachable_nodes AS (
+        SELECT 
+          node,
+          MIN(agg_cost) AS agg_cost
+        FROM dd
+        GROUP BY node
+      ),
+      candidate_roads AS MATERIALIZED (
+        SELECT
+          w.*,
+          ns.agg_cost AS source_agg_cost,
+          nt.agg_cost AS target_agg_cost
+        FROM ${waysTable} w
+        LEFT JOIN reachable_nodes ns ON ns.node = w.source
+        LEFT JOIN reachable_nodes nt ON nt.node = w.target
+        WHERE ns.node IS NOT NULL OR nt.node IS NOT NULL
+      ),
+      scored_roads AS (
+        SELECT
+          c.*,
+          c.cost / GREATEST(
+            LEAST(
+              CASE WHEN c.noise_weight = 1 THEN $3::float ELSE 1.0 END,
+              CASE WHEN c.light_weight = 0 THEN $4::float ELSE 1.0 END,
+              CASE WHEN c.trafficlight_weight = 1 THEN $5::float ELSE 1.0 END,
+              CASE WHEN c.tactile_weight = 0 THEN $6::float ELSE 1.0 END,
+              CASE WHEN c.tree_weight = 0 THEN $7::float ELSE 1.0 END,
+              CASE WHEN c.temp_weight_s = 1 THEN $8::float ELSE 1.0 END,
+              CASE WHEN c.temp_weight_w = 1 THEN $9::float ELSE 1.0 END,
+              CASE WHEN c.blue_weight = 0 THEN $10::float ELSE 1.0 END,
+              CASE WHEN c.green_weight = 0 THEN $11::float ELSE 1.0 END,
+              CASE WHEN c.station_weight = 0 THEN $12::float ELSE 1.0 END,
+              CASE WHEN c.wc_d_weight = 0 THEN $13::float ELSE 1.0 END,
+              CASE WHEN c.path_width_weight = 1 THEN $14::float ELSE 1.0 END,
+              CASE WHEN c.stair_weight = 1 THEN $15::float ELSE 1.0 END,
+              CASE WHEN c.obstacle_weight = 1 THEN $16::float ELSE 1.0 END,
+              CASE WHEN c.slope_weight = 1 THEN $17::float ELSE 1.0 END,
+              CASE WHEN c.uneven_surfaces_weight = 1 THEN $18::float ELSE 1.0 END,
+              CASE WHEN c.poor_pavement_weight = 1 THEN $19::float ELSE 1.0 END,
+              CASE WHEN c.kerbs_h_weight = 1 THEN $20::float ELSE 1.0 END,
+              CASE WHEN c.facilities_weight = 0 THEN $21::float ELSE 1.0 END,
+              CASE WHEN c.pedestrian_flow_weight = 1 THEN $22::float ELSE 1.0 END
+            ), 1e-6
+          ) AS adjusted_cost
+        FROM candidate_roads c
+      ),
+      final_roads AS (
+        SELECT *
+        FROM scored_roads r
+        WHERE
+          (
+            r.source_agg_cost IS NOT NULL
+            AND r.source_agg_cost + r.adjusted_cost <= $2::float
+          )
+          OR
+          (
+            r.target_agg_cost IS NOT NULL
+            AND r.target_agg_cost + r.adjusted_cost <= $2::float
+          )
       )
+      SELECT json_build_object(
+        'type', 'FeatureCollection',
+        'features', COALESCE(
+          json_agg(
+            json_build_object(
+              'type', 'Feature',
+              'geometry', ST_AsGeoJSON(fr.the_geom)::json,
+              'properties', json_build_object('gid', fr.gid)
+            )
+          ),
+          '[]'::json
+        )
+      ) AS geojson
+      FROM final_roads fr
     `, [startVid, 
         maxDistance, 
         noiseVariable, 
