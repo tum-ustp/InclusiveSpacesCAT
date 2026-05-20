@@ -260,7 +260,7 @@
   "checkbox_poor": "Schlechter Belag",
   "checkbox_kerb": "Hohe Bordsteine",
   "checkbox_facility": "Keine Einrichtungen",
-  "checkbox_crowd": "Überfüllter Bereich",
+  "checkbox_crowd": "Belebte Umgebung",
   "loading": "Berechnung läuft ...",
   "loading_cancle": "Drücken Sie Esc, um abzubrechen.",
   "start_point_popup": "Startpunkt der Analyse",
@@ -431,7 +431,7 @@
     },
     "pedestrian_flow_wms": {
       "title": "Fußgängerverkehr – Bedeutungsräume",
-      "desc": "Dieser Datensatz visualisiert die relative Bedeutung von Straßen und Wegen für den Fußverkehr in Hamburg. Die Werte wurden auf Basis des digitalen Landschaftsmodells und verschiedener Points of Interest (POI) berechnet, darunter ÖPNV-Haltestellen, Einzelhandel und Schulen. Jeder POI erhielt einen Einflussbereich und eine Gewichtung von 0 bis 15, wobei höhere Werte eine größere Bedeutung darstellen.",
+      "desc": "Die Daten wurden auf Basis eines Fußwegenetz aus dem Digitalen Landschaftsmodell und verschiedenen Interessensorten (POI) wie ÖPNV-Haltestellen, Einzelhandel oder Schulen berechnet. Jeder POI erhielt einen Einflussbereich und eine Gewichtung von 0 bis 15, wobei die höchste Zahl die größte Bedeutung darstellt, die niedrigsten eine geringe Bedeutung.",
       "source": "Geoportal Hamburg (Bedeutungsräume für den Fußverkehr)"
     },
     "pedestrian_flow": {
