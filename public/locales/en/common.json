@@ -260,7 +260,7 @@
   "checkbox_poor": "Poor Pavement",
   "checkbox_kerb": "High Kerbs",
   "checkbox_facility": "No Facilities",
-  "checkbox_crowd": "Crowded Area",
+  "checkbox_crowd": "Busy area",
   "loading": "Calculating...",
   "loading_cancle": "Press Esc to cancel.",
   "start_point_popup": "Analysis starting point",
@@ -431,7 +431,7 @@
     },
     "pedestrian_flow_wms": {
       "title": "Pedestrian Flow",
-      "desc": "This dataset visualizes the relative importance of streets and paths for pedestrian movement in Hamburg. The significance values were calculated using the city’s digital landscape model and various points of interest (POIs) such as public transport stops, retail areas, and schools. Each POI was assigned an influence area and a weight from 0 to 15, with higher values indicating greater pedestrian relevance.",
+      "desc": "The data was calculated based on a pedestrian network derived from the Digital Landscape Model and various points of interest (POIs), such as public transportation stops, retail stores, and schools. Each POI was assigned a catchment area and a weighting from 0 to 15, with the highest number representing the greatest significance and the lowest numbers representing the least significance.",
       "source": "Geoportal Hamburg (Bedeutungsräume für den Fußverkehr)"
     },
     "pedestrian_flow": {
