@@ -1,4 +1,4 @@
-{
+﻿{
   "page_title_landing":"CAT – Home",
   "page_title_map":"CAT – Map",
   "nav_links": "Navigation bar",
@@ -71,6 +71,7 @@
   "landing_contact_zuniga": "M.Sc. Maria Jose Zuniga:",
   "landing_contact_huashu": "M.Sc. Huashu Zhan:",
   "landing_contact_rita": "B.Arch. Margarita Zykova:",
+  "landing_contact_past_members": "Past members:",
   "landing_city_not_ready": "Sorry, {{city}} map is still under construction.",
   "landing_disclaimer_1": "The Comfort-Based Accessibility Tool (CAT) is a tool created within the",
   "landing_disclaimer_2": "Project.",
@@ -93,9 +94,97 @@
     "section1_title": "1. What does the CAT interface look like?",
     "section2_title": "2. How to use CAT?",
     "section3_title": "3. Additional features",
-    "section4_title": "4. Research basis for the Profiles",
+    "section4_title": "4. Research basis",
+    "section4_text": "The Comfort-Based Accessibility Tool (CAT) helps explore walking accessibility while accounting for comfort-related barriers that affect people with different mobility capacities. It builds on established network-based accessibility methods and extends them to reflect how environmental conditions influence real-world walking decisions.",
+    "section4_point1_title": "Where CAT comes from",
+    "section4_point1_text": "CAT is based on earlier distance-oriented walking accessibility tools, in particular the SmartHubs Accessibility Tool (<moreinfo>more info</moreinfo>). These earlier tools measured accessibility mainly through walking time and speed from a chosen starting point. Experience with these approaches showed that assuming uniform walking ability limits how results can be interpreted for groups such as older adults, wheelchair users, or people with sensory or cognitive impairments. CAT maintains the same routing-based concept while adding comfort-related constraints to improve interpretability.",
+    "section4_point2_title": "What makes CAT different",
+    "section4_point2_intro": "CAT introduces comfort and barrier considerations into walking accessibility analysis:",
+    "section4_point2_bullet1": "Comfort constraints (such as steep gradients, surface quality, crossings, or lighting) can reduce effective walking reach.",
+    "section4_point2_bullet2": "Barriers that are experienced as non-traversable are treated as impassable in the network rather than as simply slower routes.",
+    "section4_point2_bullet3": "Results allow comparison between a baseline scenario (without comfort constraints) and comfort-penalized scenarios, making assumptions explicit and outcomes easier to interpret.",
+    "section4_point2_outro": "To avoid unrealistic results, multiple comfort effects are combined in a stabilized way, ensuring that accessibility does not collapse simply because several constraints are selected at once.",
+    "section4_point3_title": "Evidence-based development",
+    "section4_point3_intro": "CAT was developed using three complementary evidence streams:",
+    "section4_point3_item1": "Interviews with mobility experts and people in vulnerable mobility situations identified which conditions are experienced as barriers, when people reroute or avoid areas, and how sensitivities differ across mobility capacities.",
+    "section4_point3_item2": "Co-creation with Communities of Practice ensured that indicators are relevant for planning and can be represented through stable, city-scale spatial datasets that municipalities can maintain.",
+    "section4_point3_item3": "User testing with planners, experts, and citizens informed improvements to the interface, defaults, explanations, and workflows so that results are understandable and credible for different users.",
+    "section4_point3_outro": "Together, these steps ensure that CAT is grounded in lived experience, feasible in municipal practice, and usable in planning and exploratory contexts.",
+    "section4_point4_title": "Mobility profiles",
+    "section4_point4_text_1": "CAT offers predefined mobility profiles that reflect typical sensitivities and walking speeds derived from empirical evidence (for example for wheelchair users, older adults, or people with visual impairments). These profiles support consistent comparisons across user groups and scenarios while keeping assumptions transparent.",
+    "section4_point4_text_2": "The mobility profiles are based on qualitative interview data from interviews with 79 persons with mobility impairments, located in Larnaca (Cyprus), Hamburg (Germany), Geneva (Switzerland), Budapest (Hungary), Madrid (Spain) and Penteli/Athens (Greece). A scientific paper on the interview analysis progress is currently under review and will be linked here as soon as possible.",
+    "section4_point4_text_3": "The implemented mobility profiles consolidate discomfort factors reported by people with specific mobility impairments. They do not constitute statistically derived groupings but instead reflect a conceptually and qualitatively informed clustering based on empirical interview findings.",
+    "section4_point5_title": "Reference List:",
+    "section4_point5_text": "Knapstad, M. K., Naterstad, I., & Bogen, B. (2023). The association between cognitive impairment, gait speed, and Walk ratio. Frontiers in Aging Neuroscience, 15, 1092990. <ref1>https://doi.org/10.3389/fnagi.2023.1092990</ref1><br/>Li, L., Simonsick, E. M., Ferrucci, L., & Lin, F. R. (2013). Hearing loss and gait speed among older adults in the United States. Gait & Posture, 38(1), 25-29. <ref2>https://doi.org/10.1016/j.gaitpost.2012.10.006</ref2><br/>Nakamura, T. (1997). Quantitative analysis of gait in the visually impaired. Disability and Rehabilitation, 19(5), 194-197. <ref3>https://doi.org/10.3109/09638289709166526</ref3><br/>Shi, L., Xie, Q., Cheng, X., Chen, L., Zhou, Y., & Zhang, R. (2009). Developing a database for emergency evacuation model. Building and Environment, 44(8), 1724-1729. <ref4>https://doi.org/10.1016/j.buildenv.2008.11.008</ref4>",
+    "mobility_table": {
+      "toggle_show": "Explore the full table of Mobility profiles",
+      "toggle_hide": "Hide full table of Mobility profiles",
+      "headers": {
+        "feature": "Discomfort feature",
+        "assessment": "Assessment",
+        "story": "A story behind the comfort gap"
+      },
+      "groups": {
+        "physical": "Physical impairment, walking speed with crutches = 3.38 km/h, wheeling speed = 1 km/h for manual wheelchair or 6 km/h for electric wheelchair (Shi et al., 2009) (N = 29)",
+        "visual": "Visual impairment including blind people, walking speed = 3.10 km/h (Nakamura, 1997) (N = 18)",
+        "carer": "Carer of child, walking speed = 3.80 km/h (Shi et al., 2009) (N = 8)",
+        "hearing": "Hearing impairment including deaf people, walking speed = 3.50 km/h (Li et al., 2013) (N = 7)",
+        "intellectual": "Intellectual impairment, walking speed = 3.60 km/h (Knaps et al., 2023) (N = 13)",
+        "older": "Older person (age > 60 years, no other mobility impairments), walking speed = 3.70 km/h (Shi et al., 2009) (N = 5)"
+      },
+      "stories": {
+        "physical": {
+          "cold_weather": "\"In the winter we don't move around town due to cold and rain, so I don't experience any extra problem.\"",
+          "no_street_lights": "\"Here we also have another fundamental problem, i.e. lighting is a major problem. A lack of lighting is a major problem, especially with regard to insufficiently good paths.\"",
+          "stairs_only": "\"But it's obviously longer that way, but at least you don't have to climb stairs. It's hard to take the stairs when it's raining, it's wet anyway, because it's a difficult movement for me, so I avoid it of course. But it's calculated in time, how much before I start to get from a to b.\"",
+          "obstacles": "\"When I walk in the city during the day I find many obstacles such as trees and bushes placed on the pavement that prevent my wheelchair from moving. Several times I must find a spot on the sidewalk where I can get off with my wheelchair to continue my journey.\"",
+          "uneven_surfaces": "\"From the condition of the ground, through waves, through holes. I don't know, the frost causes damage, and this can then lead to the risk of accidents and to people being anxious and probably not even daring to use these paths. Those are all tripping hazards.\"",
+          "poor_pavement": "\"Cobblestones, bumpy roads. Us wheelchair users have a hard time going on them.\"",
+          "high_kerbs": "\"I was on the sidewalk along a boulevard and needed to cross at the pedestrian crossing. However, there was a raised curb, and an empty space between the curb and the sidewalk. I couldn't get my electric wheelchair across. Instead of a ramp between the curb and the sidewalk, there was a gap, like a small ditch. The empty space on the road was there for the water to escape. A pedestrian could attempt to jump over a gap in the crossing, but in a wheelchair, I couldn't manage it.\"",
+          "no_facilities": "\"In the built environment, there is chaos. In the buildings, and in the public buildings, which should be there, because the buildings are old, they are not adapted, and those that can be adapted and be used for accessibility are very few. Very few buildings have been adapted for accessibility. Accessibility stops at a ramp, and that's all. So, all these interventions are multi-point. And there are also the buttons, so that the user knows where to click, what to click and where to find.\""
+        },
+        "visual": {
+          "noise_pollution": "\"In general, the traffic noise is really exhausting. For example, if you've already been to work or are on the way back or something and your concentration is already low anyway. Large cars in particular, such as trucks, are generally louder anyway.\"",
+          "no_traffic_lights": "\"If I have to cross a crosswalk that doesn't have an audible signal, I can't see if it's red or green, or if there isn't even a traffic light. I don't feel safe.\"",
+          "no_tactile_paths": "\"For example, for people with visual impairments, the environment is unfriendly because there is a lack of guidance throughout the city. There was a public outcry about this, so now, in some places, we see tactile paving that assists pedestrians who are visually impaired.\"",
+          "obstacles": "\"First of all, all the people coming in front of me who aren't looking at what they're doing because they're looking at their phones, the bikes and scooters on the sidewalks, and all the signs on the sidewalks. That's a lot of obstacles. And the number of things that are put on the guiding lines, whether in stations, or in winter with the snow... There's ignorance, a lack of sensitivity.\"",
+          "uneven_surface": "\"Yeah, with the snow, it's obvious [a challenge] even on the normal road, with the white cane, it's very complicated to navigate because we don't have the same sensation, we don't have the same sensitivity.\""
+        },
+        "carer": {
+          "cold_weather": "\"What if I've been outside with the baby for a long time and realize it's a bit cold now, but I need another half hour or hour to get home, I don't know. Yes, simply a place where you can maybe warm up for a short time or where you can find shelter, I'm thinking of these rooms on platforms, for example, where you can stay for a short time or sit down.\"",
+          "no_street_lighting": "\"I will also talk about the lighting, which in some places of the city is not enough and you don't feel the security that you should.\"",
+          "narrow_sidewalk": "\"And people come towards you, then it's definitely the case: some people do go to the side, but some tend not to. And so, you're the person with a baby carriage or something that doesn't conform to the norm, and definitely you are the person who stands on the side to let the other persons pass.\"",
+          "obstacles": "\"Also, the feeling that elements are in the way, for example signs, bicycle stands, or trees.\"",
+          "poor_pavement": "\"There's a group for mums on the local Facebook page where they share advice on which prams won't fall apart on cobbled streets. While it can shake the baby, the stroller itself tends to come apart.\"",
+          "crowded_areas": "\"Yes, I would definitely say that, and it would be nice if public transport or whatever means of transport I use is not associated with stress for me. But there are also other parents who take the subway and bus. It's just crowded in the big city. Simply often full, it's just super stressful. That's why I'm still avoiding it at the moment. In other words, it's not freedom of choice, and I definitely feel super restricted in my autonomy, which I still had two months ago.\""
+        },
+        "hearing": {
+          "noise_pollution": "\"Something that would be really great would be to address the problem of noise. We talk a lot about pollution and all sorts of things, but there's one theme that's starting to emerge, and that's noise radars. That would be really great. It would change my life. We could start by banning extremely noisy two-wheelers. [...]\"",
+          "no_street_lighting": "\"The same stairs are accessed by a lamp that illuminates the stairs, not only at the top but also at the bottom. In the dark, the tripping hazard is a beacon to see if you need to trip up a stair. If there is adequate illumination, which I illustrate for simplicity as a lantern, there can be a myriad of things.\"",
+          "no_traffic_lights": "\"Irregular parking, waiting at or near road crossings, pedestrian crossings. This obscures the view of the roadway from which a vehicle may be coming. This is even more dangerous if the crossing is not equipped with traffic lights, so that the driver of the vehicle would only slow down as a result of being detected. But this makes it more difficult for all involved to detect and recognize the situation.\"",
+          "signs": "\"Non-illuminated information elements, signs. In this case I rely more on digital tools (e.g. Google Maps), but often these do not include closed public areas or the information I am looking for.\"",
+          "crowded_areas": "\"I always warn them: 'I can't hear you, I'm pretty deaf, so instead of shouting my name, give me a sign.' It usually works, but you have to be able to do it. It sets you apart, and shows that you're handicapped in the eyes of others. It complicates things and makes other people work harder, because you're getting them out of their routine. For you, they'll have to make an exception: instead of talking, they'll have to look for you with their eyes and give you a sign. That's a lot of mental energy to put in, and I can understand that some people don't have that energy, that ability to say, 'I'm here, I exist, I've got a problem, you've got to adapt to me.' But for the TPG, it's a serious matter. When there's a problem, there are screens, the information has to be displayed in writing.\""
+        },
+        "intellectual": {
+          "cold_weather": "\"I drew the sky to represent cold and rainy conditions, and I also wanted to illustrate how, on hot days, I am unable to move comfortably. Ideally, I would like to include a kiosk or an air-conditioned room for either hot or cold days, but I was unable to draw it.\"",
+          "lighting": "\"I don't like nighttime, especially on streets where there are no streetlights.\"",
+          "narrow_sidewalk": "\"Another important issue is the narrow width of the sidewalks.\"",
+          "uneven_surface": "\"I always carry a torch with me, especially when it gets dark so early in the evening. The reason is the planning of the street. There are uneven parts of the street or crooked curb stones that you can trip on every time.\"",
+          "crowded_areas": "\"What I find uncomfortable are crowds. When you are in a shopping centre or pressed against the glass in a crowded bus. People get in with their shopping bags or God knows what else, then there comes a mother with a stroller and wants to get in, even though there is no space. These are situations when I want to get out, but don't even know how (to get through the crowd).\""
+        },
+        "older": {
+          "hot_temperature": "\"In the summer the temperature is too high, and I can't move. I choose the evening hours to get out of the house.\"",
+          "cold_temperature": "\"The same in winter. I can't leave the house because of the rain and cold.\"",
+          "no_street_lights": "\"During the evening hours, adequate lighting is available only on the main streets of the city. I do not believe that if the lighting were improved, people would walk more at night. Perhaps this is also related to the sense of fear that exists at night.\"",
+          "no_tree_shade": "\"More trees and shade would make walking easier in the summer. Public spaces should have seating areas that are actually comfortable for older adults.\"",
+          "narrow_sidewalk": "\"The sidewalks in my neighborhood are too narrow and uneven. It makes walking difficult, especially with a cane. Also, many benches are not designed for elderly comfort.\"",
+          "stairs": "\"Mainly I cannot walk easily. In the summer I need pavements and green (shade) in order to be able to walk. On a cold day I would like well-built and protected places where I walk. I cannot easily climb the stairs, and I cannot easily walk on pavements due to parked cars.\"",
+          "surfaces": "\"The obstacles that I face are related to the sidewalks, which in many cases either do not exist or, when they do, are in very poor condition, making it impossible to walk on them. In particular in our area, all sidewalks are obstructed by large tree trunks, rendering them nearly impassable and forcing one to walk on the street instead. Overall, I have become accustomed to almost always using my car for my transportation needs, and perhaps the poor condition of the sidewalks serves as a justification for my not walking.\"",
+          "high_kerbs": "\"Several sidewalks are high, making it difficult to use them without assistance. I always try to find a lower spot on the sidewalk to be able to use it.\""
+        }
+      }
+    },
     "section5_title": "5. What do you need to set up CAT?",
-
     "section5_intro": "CAT relies on both routing data and city-specific environmental information. In order to generate meaningful accessibility results, it needs a street network for calculating reachable areas, as well as additional datasets that describe local conditions related to comfort and accessibility. These data are prepared and connected in the background so that users can explore them through the CAT interface.",
     "section5_data_title": "Data",
     "section5_data_text": "CAT relies on several types of data. A street and path network forms the basis for routing and accessibility analysis, while city boundary data and thematic map layers provide additional local context. These layers may include information such as noise, street lights, trees, tactile support, obstacles, slopes, pavement conditions, or nearby facilities. The routing network is based on OpenStreetMap data, and further city-specific geographic data can be taken from official sources. In Hamburg, for example, such data can be obtained through Geoportal Hamburg. If available, some datasets can also be used as WMS services for visualization in CAT. Datasets needed for the actual accessibility calculation are processed separately in the background.",

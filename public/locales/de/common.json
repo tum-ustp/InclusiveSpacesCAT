@@ -1,4 +1,4 @@
-{
+﻿{
   "page_title_landing": "CAT – Startseite",
   "page_title_map": "CAT – Karte",
   "nav_links": "Navigationsleiste",
@@ -71,6 +71,7 @@
   "landing_contact_zuniga": "M.Sc. Maria Jose Zuniga:",
   "landing_contact_huashu": "M.Sc. Huashu Zhan:",
   "landing_contact_rita": "B.Arch. Margarita Zykova:",
+  "landing_contact_past_members": "Ehemalige Mitglieder:",
   "landing_city_not_ready": "Entschuldigung, die Karte von {{city}} ist noch in Bearbeitung.",
   "landing_disclaimer_1": "Das Comfort-Based Accessibility Tool (CAT) wurde im Rahmen des",
   "landing_disclaimer_2": "Projekts entwickelt.",
@@ -93,7 +94,96 @@
     "section1_title": "1. Wie sieht die CAT-Oberfläche aus?",
     "section2_title": "2. Wie verwendet man CAT?",
     "section3_title": "3. Zusätzliche Funktionen",
-    "section4_title": "4. Forschungsgrundlage für die Profile",
+    "section4_title": "4. Forschungsgrundlage",
+    "section4_text": "Das Comfort-Based Accessibility Tool (CAT) unterstützt die Analyse der fußläufigen Erreichbarkeit unter Berücksichtigung komfortbezogener Barrieren, die Menschen mit unterschiedlichen Mobilitätsfähigkeiten betreffen. Es baut auf etablierten netzwerkbasierten Methoden der Erreichbarkeitsanalyse auf und erweitert diese, um abzubilden, wie Umweltbedingungen reale Entscheidungen beim Zufußgehen beeinflussen.",
+    "section4_point1_title": "Woher CAT stammt",
+    "section4_point1_text": "CAT basiert auf früheren, distanzorientierten Tools zur Analyse der fußläufigen Erreichbarkeit, insbesondere auf dem SmartHubs Accessibility Tool (<moreinfo>weitere Informationen</moreinfo>). Diese früheren Tools maßen Erreichbarkeit vor allem anhand von Gehzeit und Gehgeschwindigkeit von einem gewählten Ausgangspunkt aus. Die Erfahrungen mit diesen Ansätzen haben gezeigt, dass die Annahme einer einheitlichen Gehfähigkeit die Interpretation der Ergebnisse für Gruppen wie ältere Menschen, Rollstuhlnutzende oder Menschen mit sensorischen oder kognitiven Beeinträchtigungen einschränkt. CAT behält das gleiche routenbasierte Konzept bei, ergänzt es jedoch um komfortbezogene Einschränkungen, um die Interpretierbarkeit zu verbessern.",
+    "section4_point2_title": "Was CAT unterscheidet",
+    "section4_point2_intro": "CAT integriert Komfort- und Barriereaspekte in die Analyse der fußläufigen Erreichbarkeit:",
+    "section4_point2_bullet1": "Komfortbezogene Einschränkungen, wie etwa starke Steigungen, Oberflächenqualität, Querungen oder Beleuchtung, können die tatsächlich erreichbare Gehreichweite verringern.",
+    "section4_point2_bullet2": "Barrieren, die als unbegehbar angesehen werden, werden im Netzwerk als unpassierbar behandelt, anstatt einfach nur als langsamere Routen.",
+    "section4_point2_bullet3": "Die Ergebnisse ermöglichen einen Vergleich zwischen einem Basisszenario ohne komfortbezogene Einschränkungen und Szenarien mit Komfortabschlägen. Dadurch werden Annahmen explizit gemacht und die Ergebnisse leichter interpretierbar.",
+    "section4_point2_outro": "Um unrealistische Ergebnisse zu vermeiden, werden mehrere Komforteffekte auf stabilisierte Weise kombiniert, wodurch sichergestellt wird, dass die Erreichbarkeit nicht allein dadurch zusammenbricht, dass mehrere Einschränkungen gleichzeitig ausgewählt werden.",
+    "section4_point3_title": "Evidenzbasierte Entwicklung",
+    "section4_point3_intro": "CAT wurde auf Grundlage von drei sich ergänzenden Evidenzquellen entwickelt:",
+    "section4_point3_item1": "Interviews mit Mobilitätsexpertinnen und -experten sowie mit Menschen in vulnerablen Mobilitätssituationen zeigten, welche Bedingungen als Barrieren erlebt werden, wann Menschen Umwege nehmen oder bestimmte Bereiche umgehen und wie sich Sensitivitäten je nach Mobilitätsfähigkeit unterscheiden.",
+    "section4_point3_item2": "Die Ko-Kreation mit Communities of Practice stellte sicher, dass die Indikatoren für die Planung relevant sind und durch stabile, stadtweite räumliche Datensätze abgebildet werden können, die von Kommunen gepflegt werden können.",
+    "section4_point3_item3": "Nutzertests mit Planerinnen und Planern, Expertinnen und Experten sowie Bürgerinnen und Bürgern flossen in Verbesserungen der Benutzeroberfläche, der Standardeinstellungen, der Erklärungen und der Arbeitsabläufe ein, damit die Ergebnisse für unterschiedliche Nutzergruppen verständlich und glaubwürdig sind.",
+    "section4_point3_outro": "Zusammen stellen diese Schritte sicher, dass CAT auf gelebten Erfahrungen basiert, in der kommunalen Praxis umsetzbar ist und in planerischen sowie explorativen Kontexten genutzt werden kann.",
+    "section4_point4_title": "Mobilitätsprofile",
+    "section4_point4_text_1": "CAT bietet vordefinierte Mobilitätsprofile, die typische Sensitivitäten und Gehgeschwindigkeiten auf Grundlage empirischer Evidenz widerspiegeln, zum Beispiel für Rollstuhlnutzende, ältere Menschen oder Menschen mit Sehbeeinträchtigungen. Diese Profile unterstützen konsistente Vergleiche zwischen Nutzergruppen und Szenarien, während die zugrunde liegenden Annahmen transparent bleiben.",
+    "section4_point4_text_2": "Die Mobilitätsprofile basieren auf qualitativen Interviewdaten aus Gesprächen mit 79 Personen mit Mobilitätsbeeinträchtigungen in Larnaka (Zypern), Hamburg (Deutschland), Genf (Schweiz), Budapest (Ungarn), Madrid (Spanien) und Penteli/Athen (Griechenland). Ein wissenschaftlicher Artikel zur Analyse der Interviews befindet sich derzeit im Begutachtungsverfahren und wird hier verlinkt, sobald dies möglich ist.",
+    "section4_point4_text_3": "Die implementierten Mobilitätsprofile bündeln Komforteinschränkungen, die von Menschen mit spezifischen Mobilitätsbeeinträchtigungen berichtet wurden. Sie stellen keine statistisch abgeleiteten Gruppierungen dar, sondern spiegeln eine konzeptionell und qualitativ fundierte Clusterung auf Basis empirischer Interviewergebnisse wider.",
+    "section4_point5_title": "Literaturverzeichnis:",
+    "section4_point5_text": "Knapstad, M. K., Naterstad, I., & Bogen, B. (2023). The association between cognitive impairment, gait speed, and Walk ratio. Frontiers in Aging Neuroscience, 15, 1092990. <ref1>https://doi.org/10.3389/fnagi.2023.1092990</ref1><br/>Li, L., Simonsick, E. M., Ferrucci, L., & Lin, F. R. (2013). Hearing loss and gait speed among older adults in the United States. Gait & Posture, 38(1), 25-29. <ref2>https://doi.org/10.1016/j.gaitpost.2012.10.006</ref2><br/>Nakamura, T. (1997). Quantitative analysis of gait in the visually impaired. Disability and Rehabilitation, 19(5), 194-197. <ref3>https://doi.org/10.3109/09638289709166526</ref3><br/>Shi, L., Xie, Q., Cheng, X., Chen, L., Zhou, Y., & Zhang, R. (2009). Developing a database for emergency evacuation model. Building and Environment, 44(8), 1724-1729. <ref4>https://doi.org/10.1016/j.buildenv.2008.11.008</ref4>",
+    "mobility_table": {
+      "toggle_show": "Gesamte Tabelle der Mobilitätsprofile anzeigen",
+      "toggle_hide": "Gesamte Tabelle der Mobilitätsprofile ausblenden",
+      "headers": {
+        "feature": "Unbehaglichkeitsfaktor",
+        "assessment": "Bewertung",
+        "story": "Eine Geschichte hinter der Komfortlücke"
+      },
+      "groups": {
+        "physical": "Körperliche Beeinträchtigung, Gehgeschwindigkeit mit Krücken = 3,38 km/h, Rollgeschwindigkeit = 1 km/h für einen manuellen Rollstuhl oder 6 km/h für einen elektrischen Rollstuhl (Shi et al., 2009) (N = 29)",
+        "visual": "Sehbeeinträchtigung einschließlich blinder Menschen, Gehgeschwindigkeit = 3,10 km/h (Nakamura, 1997) (N = 18)",
+        "carer": "Betreuungsperson eines Kindes, Gehgeschwindigkeit = 3,80 km/h (Shi et al., 2009) (N = 8)",
+        "hearing": "Hörbeeinträchtigung einschließlich gehörloser Menschen, Gehgeschwindigkeit = 3,50 km/h (Li et al., 2013) (N = 7)",
+        "intellectual": "Kognitive Beeinträchtigung, Gehgeschwindigkeit = 3,60 km/h (Knapstad et al., 2023) (N = 13)",
+        "older": "Ältere Person (Alter > 60 Jahre, keine weiteren Mobilitätsbeeinträchtigungen), Gehgeschwindigkeit = 3,70 km/h (Shi et al., 2009) (N = 5)"
+      },
+      "stories": {
+        "physical": {
+          "cold_weather": "\"Im Winter bewegen wir uns wegen Kälte und Regen nicht viel in der Stadt, daher empfinde ich dort kein zusätzliches Problem.\"",
+          "no_street_lights": "\"Hier haben wir noch ein weiteres grundlegendes Problem, nämlich dass Beleuchtung ein großes Problem ist. Ein Mangel an Beleuchtung ist ein großes Problem, besonders auf nicht ausreichend guten Wegen.\"",
+          "stairs_only": "\"Es ist auf diesem Weg natürlich länger, aber wenigstens muss man keine Treppen steigen. Wenn es regnet, ist es ohnehin nass, und Treppensteigen ist für mich eine schwierige Bewegung, deshalb vermeide ich es natürlich. Aber berechnet wird nur die Zeit, also wie lange ich brauche, um von A nach B zu kommen.\"",
+          "obstacles": "\"Wenn ich tagsüber in der Stadt unterwegs bin, finde ich viele Hindernisse wie Bäume und Büsche auf dem Gehweg, die meinen Rollstuhl blockieren. Mehrfach muss ich eine Stelle finden, an der ich mit dem Rollstuhl vom Gehweg herunterfahren kann, um meinen Weg fortzusetzen.\"",
+          "uneven_surfaces": "\"Vom Zustand des Bodens, über Wellen bis hin zu Löchern. Ich weiß nicht, Frost verursacht Schäden, und das kann dann zu Unfallgefahr führen und dazu, dass Menschen verunsichert sind und diese Wege wahrscheinlich gar nicht mehr nutzen. Das sind alles Stolpergefahren.\"",
+          "poor_pavement": "\"Kopfsteinpflaster, holprige Straßen. Wir Rollstuhlnutzenden haben große Schwierigkeiten, darauf zu fahren.\"",
+          "high_kerbs": "\"Ich war auf dem Gehweg an einer Allee und musste an einem Fußgängerüberweg die Straße queren. Dort gab es jedoch einen hohen Bordstein und einen leeren Zwischenraum zwischen Bordstein und Gehweg. Ich konnte mit meinem Elektrorollstuhl nicht hinüber. Statt einer Rampe zwischen Bordstein und Gehweg gab es eine Lücke, wie einen kleinen Graben. Dieser freie Raum auf der Straße war für den Wasserablauf da. Zu Fuß könnte man versuchen, über diese Lücke zu springen, aber im Rollstuhl war das für mich nicht zu schaffen.\"",
+          "no_facilities": "\"In der gebauten Umwelt herrscht Chaos. In den Gebäuden, auch in den öffentlichen Gebäuden, die eigentlich vorhanden sein sollten, sind die Gebäude alt, nicht angepasst, und diejenigen, die angepasst und barrierefrei nutzbar gemacht werden können, sind sehr wenige. Sehr wenige Gebäude wurden für Barrierefreiheit umgebaut. Barrierefreiheit endet bei einer Rampe, und das war's. All diese Maßnahmen sind also punktuell. Und es geht auch um Dinge wie Knöpfe, damit die Nutzer wissen, wo sie drücken müssen, was sie drücken müssen und wo sie etwas finden können.\""
+        },
+        "visual": {
+          "noise_pollution": "\"Allgemein ist Verkehrslärm wirklich anstrengend. Zum Beispiel, wenn man schon bei der Arbeit war oder gerade auf dem Rückweg ist und die Konzentration ohnehin schon niedrig ist. Besonders große Autos wie Lastwagen sind generell noch lauter.\"",
+          "no_traffic_lights": "\"Wenn ich einen Zebrastreifen überqueren muss, der kein akustisches Signal hat, kann ich nicht sehen, ob es Rot oder Grün ist, oder ob überhaupt eine Ampel da ist. Ich fühle mich dann nicht sicher.\"",
+          "no_tactile_paths": "\"Für Menschen mit Sehbeeinträchtigungen ist die Umgebung zum Beispiel unfreundlich, weil es in der ganzen Stadt an Orientierungshilfen fehlt. Darüber gab es großen öffentlichen Unmut, und deshalb sehen wir jetzt an manchen Orten taktile Pflasterungen, die sehbeeinträchtigten Fußgängern helfen.\"",
+          "obstacles": "\"Zunächst einmal all die Menschen, die mir entgegenkommen und nicht darauf achten, was sie tun, weil sie auf ihre Handys schauen, dann Fahrräder und Roller auf den Gehwegen und all die Schilder auf den Gehwegen. Das sind viele Hindernisse. Und die Menge an Dingen, die auf den Leitlinien stehen, sei es in Bahnhöfen oder im Winter bei Schnee ... Da fehlt es an Aufmerksamkeit und Sensibilität.\"",
+          "uneven_surface": "\"Ja, bei Schnee ist das natürlich auch auf einer normalen Straße eine Herausforderung. Mit dem weißen Stock ist die Orientierung sehr kompliziert, weil wir nicht dieselbe Wahrnehmung und Sensibilität haben.\""
+        },
+        "carer": {
+          "cold_weather": "\"Was ist, wenn ich schon lange mit dem Baby draußen bin und merke, dass es jetzt etwas kalt wird, ich aber noch eine halbe oder ganze Stunde bis nach Hause brauche? Dann wäre einfach ein Ort gut, an dem man sich kurz aufwärmen oder Schutz finden kann. Ich denke da zum Beispiel an Räume auf Bahnsteigen, wo man kurz bleiben oder sich hinsetzen kann.\"",
+          "no_street_lighting": "\"Ich würde auch über die Beleuchtung sprechen, weil sie an manchen Orten der Stadt nicht ausreicht und man nicht die Sicherheit spürt, die man eigentlich haben sollte.\"",
+          "narrow_sidewalk": "\"Wenn Menschen auf einen zukommen, ist es definitiv so: Manche gehen zur Seite, viele aber auch nicht. Und dann ist man die Person mit Kinderwagen oder etwas anderem, das nicht der Norm entspricht, und am Ende ist man selbst diejenige, die zur Seite geht, damit andere vorbeikommen können.\"",
+          "obstacles": "\"Auch das Gefühl, dass Elemente im Weg stehen oder Menschen, zum Beispiel Schilder, Fahrradständer oder Bäume.\"",
+          "poor_pavement": "\"Es gibt eine Gruppe für Mütter auf der lokalen Facebook-Seite, in der sie sich darüber austauschen, welche Kinderwagen auf Kopfsteinpflaster nicht auseinanderfallen. Das rüttelt zwar auch das Baby durch, aber der Kinderwagen selbst fällt sonst schnell auseinander.\"",
+          "crowded_areas": "\"Ja, das würde ich auf jeden Fall sagen, und es wäre schön, wenn der öffentliche Verkehr oder welches Verkehrsmittel ich auch nutze, für mich nicht mit Stress verbunden wäre. Aber da sind eben auch andere Eltern, die U-Bahn und Bus fahren. In der Großstadt ist es einfach voll, oft überfüllt, und das ist super stressig. Deshalb vermeide ich das im Moment noch. Das heißt, es gibt keine freie Wahl, und ich fühle mich in meiner Autonomie, die ich noch vor zwei Monaten hatte, definitiv stark eingeschränkt.\""
+        },
+        "hearing": {
+          "noise_pollution": "\"Es wäre wirklich großartig, wenn man das Problem Lärm angehen würde. Es wird viel über Verschmutzung und alle möglichen Dinge gesprochen, aber ein Thema beginnt gerade stärker aufzukommen, und das sind Lärmradare. Das wäre wirklich großartig. Es würde mein Leben verändern. Man könnte damit anfangen, extrem laute Zweiräder zu verbieten. [...]\"",
+          "no_street_lighting": "\"Dieselben Treppen werden von einer Lampe beleuchtet, die die Treppe nicht nur oben, sondern auch unten erhellt. Im Dunkeln ist die Stolpergefahr sozusagen ein Signal dafür, dass man eine Stufe verfehlen kann. Wenn ausreichend Beleuchtung vorhanden ist, die ich der Einfachheit halber als Laterne bezeichne, dann kann das auf viele Arten helfen.\"",
+          "no_traffic_lights": "\"Unregelmäßiges Parken, Warten an oder nahe Straßenquerungen, Fußgängerüberwege. Das verdeckt die Sicht auf die Fahrbahn, aus der ein Fahrzeug kommen könnte. Noch gefährlicher ist das, wenn die Querung nicht mit Ampeln ausgestattet ist, sodass der Fahrer nur abbremst, wenn er jemanden erkennt. Das macht es für alle Beteiligten schwieriger, die Situation wahrzunehmen und zu verstehen.\"",
+          "signs": "\"Nicht beleuchtete Informationselemente, Schilder. In diesem Fall verlasse ich mich stärker auf digitale Hilfsmittel wie Google Maps, aber oft enthalten diese keine gesperrten öffentlichen Bereiche oder nicht die Informationen, die ich suche.\"",
+          "crowded_areas": "\"Ich warne die Leute immer: 'Ich kann dich nicht hören, ich bin ziemlich gehörlos, also gib mir lieber ein Zeichen, statt meinen Namen zu rufen.' Das funktioniert meistens, aber man muss es eben tun können. Es hebt einen hervor und zeigt anderen, dass man beeinträchtigt ist. Es macht alles komplizierter und verlangt auch anderen mehr ab, weil man sie aus ihrer Routine herausnimmt. Für einen selbst bedeutet das, dass andere eine Ausnahme machen müssen: statt zu sprechen, müssen sie einen ansehen und ein Zeichen geben. Das kostet viel mentale Energie, und ich kann verstehen, dass manche Menschen diese Energie oder Fähigkeit nicht haben zu sagen: 'Ich bin hier, ich existiere, ich habe ein Problem, ihr müsst euch an mich anpassen.' Aber für die TPG ist das ein ernstes Thema. Wenn es ein Problem gibt, gibt es Bildschirme, und die Informationen müssen schriftlich angezeigt werden.\""
+        },
+        "intellectual": {
+          "cold_weather": "\"Ich habe den Himmel gezeichnet, um kalte und regnerische Bedingungen darzustellen, und ich wollte auch zeigen, dass ich mich an heißen Tagen nicht angenehm bewegen kann. Idealerweise würde ich gern einen Kiosk oder einen klimatisierten Raum für heiße oder kalte Tage einbeziehen, aber das konnte ich nicht zeichnen.\"",
+          "lighting": "\"Ich mag die Nacht nicht, besonders auf Straßen, auf denen es keine Straßenbeleuchtung gibt.\"",
+          "narrow_sidewalk": "\"Ein weiteres wichtiges Problem ist die geringe Breite der Gehwege.\"",
+          "uneven_surface": "\"Ich trage immer eine Taschenlampe bei mir, besonders wenn es abends so früh dunkel wird. Der Grund ist die Gestaltung der Straße. Es gibt unebene Stellen oder schiefe Bordsteinkanten, über die man jedes Mal stolpern kann.\"",
+          "crowded_areas": "\"Was ich als unangenehm empfinde, sind Menschenmengen. Wenn man in einem Einkaufszentrum ist oder in einem überfüllten Bus gegen die Scheibe gedrückt wird. Leute steigen mit Einkaufstaschen oder was auch immer ein, dann kommt noch eine Mutter mit Kinderwagen und will auch hinein, obwohl kein Platz mehr da ist. Das sind Situationen, in denen ich nur noch raus möchte, aber nicht einmal weiß, wie ich durch die Menge kommen soll.\""
+        },
+        "older": {
+          "hot_temperature": "\"Im Sommer ist die Temperatur zu hoch, und ich kann mich nicht bewegen. Ich wähle die Abendstunden, um aus dem Haus zu gehen.\"",
+          "cold_temperature": "\"Im Winter ist es genauso. Wegen Regen und Kälte kann ich das Haus nicht verlassen.\"",
+          "no_street_lights": "\"In den Abendstunden gibt es ausreichende Beleuchtung nur auf den Hauptstraßen der Stadt. Ich glaube nicht, dass Menschen mehr nachts zu Fuß gehen würden, wenn die Beleuchtung verbessert würde. Vielleicht hängt das auch mit dem Gefühl der Angst zusammen, das nachts vorhanden ist.\"",
+          "no_tree_shade": "\"Mehr Bäume und Schatten würden das Gehen im Sommer erleichtern. Öffentliche Räume sollten Sitzgelegenheiten haben, die für ältere Menschen tatsächlich bequem sind.\"",
+          "narrow_sidewalk": "\"Die Gehwege in meiner Nachbarschaft sind zu schmal und uneben. Das macht das Gehen schwierig, besonders mit einem Stock. Außerdem sind viele Bänke nicht auf den Komfort älterer Menschen ausgelegt.\"",
+          "stairs": "\"Vor allem kann ich nicht leicht gehen. Im Sommer brauche ich Gehwege und Grün, also Schatten, um überhaupt laufen zu können. An kalten Tagen wünsche ich mir gut gebaute und geschützte Wege. Ich kann nicht leicht Treppen steigen, und ich kann auf Gehwegen wegen parkender Autos nicht gut gehen.\"",
+          "surfaces": "\"Die Hindernisse, mit denen ich konfrontiert bin, hängen mit den Gehwegen zusammen, die in vielen Fällen entweder gar nicht vorhanden sind oder, wenn es sie gibt, in sehr schlechtem Zustand sind, sodass man darauf kaum gehen kann. Besonders in unserer Gegend werden die Gehwege von großen Baumstämmen blockiert, wodurch sie fast unpassierbar werden und man auf die Straße ausweichen muss. Insgesamt habe ich mich daran gewöhnt, fast immer das Auto für meine Wege zu benutzen, und vielleicht dient der schlechte Zustand der Gehwege auch als Rechtfertigung dafür, dass ich nicht zu Fuß gehe.\"",
+          "high_kerbs": "\"Viele Gehwege sind hoch, sodass sie ohne Hilfe schwer zu benutzen sind. Ich versuche immer, eine niedrigere Stelle am Bordstein zu finden, um ihn nutzen zu können.\""
+        }
+      }
+    },
     "section5_title": "5. Was wird benötigt, um CAT einzurichten?",
 
     "section5_intro": "CAT basiert sowohl auf Routing-Daten als auch auf stadtspezifischen Umweltinformationen. Um aussagekräftige Erreichbarkeitsergebnisse zu erzeugen, benötigt das Tool ein Wegenetz zur Berechnung erreichbarer Bereiche sowie zusätzliche Datensätze, die lokale Bedingungen in Bezug auf Komfort und Barrierefreiheit beschreiben. Diese Daten werden im Hintergrund vorbereitet und miteinander verknüpft, sodass Nutzerinnen und Nutzer sie über die CAT-Oberfläche erkunden können.",

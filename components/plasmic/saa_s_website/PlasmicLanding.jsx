@@ -293,16 +293,18 @@ export default function PlasmicLanding() {
                 </div>
 
                 <div className={sty.contactLine}>
-                  <span className={sty.contactName}>{t("landing_contact_huashu")}</span>
-                  <a className={sty.contactEmail} href="mailto:huashu.zhan@tum.de">
-                    huashu.zhan@tum.de
-                  </a>
-                </div>
-
-                <div className={sty.contactLine}>
                   <span className={sty.contactName}>{t("landing_contact_rita")}</span>
                   <a className={sty.contactEmail} href="mailto:margarita.zykova@tum.de">
                     margarita.zykova@tum.de
+                  </a>
+                </div>
+
+                <div className={sty.contactPastTitle}>{t("landing_contact_past_members")}</div>
+
+                <div className={sty.contactLine}>
+                  <span className={sty.contactName}>{t("landing_contact_huashu")}</span>
+                  <a className={sty.contactEmail} href="mailto:huashu.zhan@tum.de">
+                    huashu.zhan@tum.de
                   </a>
                 </div>
               </div>

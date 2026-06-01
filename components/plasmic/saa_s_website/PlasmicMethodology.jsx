@@ -1,9 +1,80 @@
-import React from "react";
+import React, { useState } from "react";
 import sty from "./PlasmicLanding.module.css";
 import { useTranslation, Trans } from "next-i18next";
 
 export default function Methodology() {
   const { t } = useTranslation("common");
+  const [showMobilityTable, setShowMobilityTable] = useState(false);
+
+  const mobilityProfilesTable = [
+    {
+      group: t("methodology.mobility_table.groups.physical"),
+      rows: [
+        [t("checkbox_temp_winter"), t("emoji_level_2"), t("methodology.mobility_table.stories.physical.cold_weather")],
+        [t("checkbox_light"), t("emoji_level_1"), t("methodology.mobility_table.stories.physical.no_street_lights")],
+        [t("checkbox_stair"), t("emoji_level_1"), t("methodology.mobility_table.stories.physical.stairs_only")],
+        [t("checkbox_obstacle"), t("emoji_level_2"), t("methodology.mobility_table.stories.physical.obstacles")],
+        [t("checkbox_uneven"), t("emoji_level_1"), t("methodology.mobility_table.stories.physical.uneven_surfaces")],
+        [t("checkbox_poor"), t("emoji_level_1"), t("methodology.mobility_table.stories.physical.poor_pavement")],
+        [t("checkbox_kerb"), t("emoji_level_1"), t("methodology.mobility_table.stories.physical.high_kerbs")],
+        [t("checkbox_facility"), t("emoji_level_2"), t("methodology.mobility_table.stories.physical.no_facilities")]
+      ]
+    },
+    {
+      group: t("methodology.mobility_table.groups.visual"),
+      rows: [
+        [t("checkbox_noise"), t("emoji_level_3"), t("methodology.mobility_table.stories.visual.noise_pollution")],
+        [t("checkbox_traffic"), t("emoji_level_3"), t("methodology.mobility_table.stories.visual.no_traffic_lights")],
+        [t("checkbox_tactile"), t("emoji_level_3"), t("methodology.mobility_table.stories.visual.no_tactile_paths")],
+        [t("checkbox_obstacle"), t("emoji_level_2"), t("methodology.mobility_table.stories.visual.obstacles")],
+        [t("checkbox_uneven"), t("emoji_level_3"), t("methodology.mobility_table.stories.visual.uneven_surface")]
+      ]
+    },
+    {
+      group: t("methodology.mobility_table.groups.carer"),
+      rows: [
+        [t("checkbox_temp_winter"), t("emoji_level_3"), t("methodology.mobility_table.stories.carer.cold_weather")],
+        [t("checkbox_light"), t("emoji_level_2"), t("methodology.mobility_table.stories.carer.no_street_lighting")],
+        [t("checkbox_narrow"), t("emoji_level_2"), t("methodology.mobility_table.stories.carer.narrow_sidewalk")],
+        [t("checkbox_obstacle"), t("emoji_level_3"), t("methodology.mobility_table.stories.carer.obstacles")],
+        [t("checkbox_poor"), t("emoji_level_3"), t("methodology.mobility_table.stories.carer.poor_pavement")],
+        [t("checkbox_crowd"), t("emoji_level_2"), t("methodology.mobility_table.stories.carer.crowded_areas")]
+      ]
+    },
+    {
+      group: t("methodology.mobility_table.groups.hearing"),
+      rows: [
+        [t("checkbox_noise"), t("emoji_level_3"), t("methodology.mobility_table.stories.hearing.noise_pollution")],
+        [t("checkbox_light"), t("emoji_level_3"), t("methodology.mobility_table.stories.hearing.no_street_lighting")],
+        [t("checkbox_traffic"), t("emoji_level_3"), t("methodology.mobility_table.stories.hearing.no_traffic_lights")],
+        [t("checkbox_obstacle"), t("emoji_level_2"), t("methodology.mobility_table.stories.hearing.signs")],
+        [t("checkbox_crowd"), t("emoji_level_3"), t("methodology.mobility_table.stories.hearing.crowded_areas")]
+      ]
+    },
+    {
+      group: t("methodology.mobility_table.groups.intellectual"),
+      rows: [
+        [t("checkbox_temp_winter"), t("emoji_level_3"), t("methodology.mobility_table.stories.intellectual.cold_weather")],
+        [t("checkbox_light"), t("emoji_level_2"), t("methodology.mobility_table.stories.intellectual.lighting")],
+        [t("checkbox_narrow"), t("emoji_level_3"), t("methodology.mobility_table.stories.intellectual.narrow_sidewalk")],
+        [t("checkbox_uneven"), t("emoji_level_3"), t("methodology.mobility_table.stories.intellectual.uneven_surface")],
+        [t("checkbox_crowd"), t("emoji_level_2"), t("methodology.mobility_table.stories.intellectual.crowded_areas")]
+      ]
+    },
+    {
+      group: t("methodology.mobility_table.groups.older"),
+      rows: [
+        [t("checkbox_temp_summer"), t("emoji_level_1"), t("methodology.mobility_table.stories.older.hot_temperature")],
+        [t("checkbox_temp_winter"), t("emoji_level_1"), t("methodology.mobility_table.stories.older.cold_temperature")],
+        [t("checkbox_light"), t("emoji_level_2"), t("methodology.mobility_table.stories.older.no_street_lights")],
+        [t("checkbox_tree"), t("emoji_level_2"), t("methodology.mobility_table.stories.older.no_tree_shade")],
+        [t("checkbox_narrow"), t("emoji_level_3"), t("methodology.mobility_table.stories.older.narrow_sidewalk")],
+        [t("checkbox_stair"), t("emoji_level_2"), t("methodology.mobility_table.stories.older.stairs")],
+        [t("checkbox_uneven"), t("emoji_level_2"), t("methodology.mobility_table.stories.older.surfaces")],
+        [t("checkbox_kerb"), t("emoji_level_3"), t("methodology.mobility_table.stories.older.high_kerbs")]
+      ]
+    }
+  ];
 
   return (
     <div className={sty.methodologyLayout}>
@@ -247,9 +318,143 @@ export default function Methodology() {
           </h1>
 
           <div className={sty.stickerCard}>
-            {/* <h2 className={sty.toolDetailsTitle}>Data</h2> */}
             <div className={sty.toolDetailsText}>
-              <p>Under Construction ... </p>
+              <p>{t("methodology.section4_text")}</p>
+              <h2 className={`${sty.toolDetailsTitle} ${sty.section4Subheading}`}>
+                {t("methodology.section4_point1_title")}
+              </h2>
+              <p>
+                <Trans
+                  i18nKey="methodology.section4_point1_text"
+                  t={t}
+                  components={{
+                    moreinfo: (
+                      <a
+                        className={sty.inlineLink}
+                        href="https://www.smartmobilityhubs.eu/smarthubs-tool/accessibility-tool"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      />
+                    ),
+                  }}
+                />
+              </p>
+
+              <h2 className={`${sty.toolDetailsTitle} ${sty.section4Subheading}`}>
+                {t("methodology.section4_point2_title")}
+              </h2>
+              <p>{t("methodology.section4_point2_intro")}</p>
+              <ul className={sty.section4BulletList}>
+                <li>{t("methodology.section4_point2_bullet1")}</li>
+                <li>{t("methodology.section4_point2_bullet2")}</li>
+                <li>{t("methodology.section4_point2_bullet3")}</li>
+              </ul>
+              <p>{t("methodology.section4_point2_outro")}</p>
+
+              <h2 className={`${sty.toolDetailsTitle} ${sty.section4Subheading}`}>
+                {t("methodology.section4_point3_title")}
+              </h2>
+              <p>{t("methodology.section4_point3_intro")}</p>
+              <ol className={sty.section4NumberedList}>
+                <li>{t("methodology.section4_point3_item1")}</li>
+                <li>{t("methodology.section4_point3_item2")}</li>
+                <li>{t("methodology.section4_point3_item3")}</li>
+              </ol>
+              <p>{t("methodology.section4_point3_outro")}</p>
+
+              <h2 className={`${sty.toolDetailsTitle} ${sty.section4Subheading}`}>
+                {t("methodology.section4_point4_title")}
+              </h2>
+              <p>{t("methodology.section4_point4_text_1")}</p>
+              <p>{t("methodology.section4_point4_text_2")}</p>
+              <p>{t("methodology.section4_point4_text_3")}</p>
+
+              <button
+                type="button"
+                className={sty.profileTableToggle}
+                onClick={() => setShowMobilityTable((prev) => !prev)}
+                aria-expanded={showMobilityTable}
+                aria-controls="mobility-profiles-table"
+              >
+                {showMobilityTable
+                  ? t("methodology.mobility_table.toggle_hide")
+                  : t("methodology.mobility_table.toggle_show")}
+              </button>
+
+              {showMobilityTable && (
+                <div id="mobility-profiles-table" className={sty.profileTableWrap}>
+                  <table className={sty.profileTable}>
+                    <thead>
+                      <tr>
+                        <th>{t("methodology.mobility_table.headers.feature")}</th>
+                        <th>{t("methodology.mobility_table.headers.assessment")}</th>
+                        <th>{t("methodology.mobility_table.headers.story")}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {mobilityProfilesTable.map((profile) => (
+                        <React.Fragment key={profile.group}>
+                          <tr className={sty.profileGroupRow}>
+                            <td colSpan={3}>{profile.group}</td>
+                          </tr>
+                          {profile.rows.map(([feature, assessment, story]) => (
+                            <tr key={`${profile.group}-${feature}`}>
+                              <td>{feature}</td>
+                              <td>{assessment}</td>
+                              <td>{story}</td>
+                            </tr>
+                          ))}
+                        </React.Fragment>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              <h2 className={`${sty.toolDetailsTitle} ${sty.section4Subheading}`}>
+                {t("methodology.section4_point5_title")}
+              </h2>
+              <p>
+                <Trans
+                  i18nKey="methodology.section4_point5_text"
+                  t={t}
+                  components={{
+                    ref1: (
+                      <a
+                        className={sty.inlineLink}
+                        href="https://doi.org/10.3389/fnagi.2023.1092990"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      />
+                    ),
+                    ref2: (
+                      <a
+                        className={sty.inlineLink}
+                        href="https://doi.org/10.1016/j.gaitpost.2012.10.006"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      />
+                    ),
+                    ref3: (
+                      <a
+                        className={sty.inlineLink}
+                        href="https://doi.org/10.3109/09638289709166526"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      />
+                    ),
+                    ref4: (
+                      <a
+                        className={sty.inlineLink}
+                        href="https://doi.org/10.1016/j.buildenv.2008.11.008"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      />
+                    ),
+                    br: <br />
+                  }}
+                />
+              </p>
             </div>
           </div> 
         </section>
@@ -289,7 +494,7 @@ export default function Methodology() {
                     components={{
                       github: (
                         <a
-                          href="https://github.com/Huashu-z/InclusiveSpace"
+                          href="https://github.com/tum-ustp/InclusiveSpacesCAT"
                           target="_blank"
                           rel="noopener noreferrer"
                         />
@@ -365,6 +570,15 @@ export default function Methodology() {
                     mariajose.zuniga@tum.de
                   </a>
                 </div>
+
+                <div className={sty.contactLine}>
+                  <span className={sty.contactName}>{t("landing_contact_rita")}</span>
+                  <a className={sty.contactEmail} href="mailto:margarita.zykova@tum.de">
+                    margarita.zykova@tum.de
+                  </a>
+                </div>
+
+                <div className={sty.contactPastTitle}>{t("landing_contact_past_members")}</div>
 
                 <div className={sty.contactLine}>
                   <span className={sty.contactName}>{t("landing_contact_huashu")}</span>
