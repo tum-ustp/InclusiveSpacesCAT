@@ -8,6 +8,7 @@ import sty from './MapComponent.module.css';
 import {getStyle, useCircleMarker,isWmsLayer, buildLayerTypeMap, layerGroupMap, wmsLayerComponents} from "./LayerStyleManager"; 
 import { HAMBURG_FACILITY_POI_LAYERS } from "./poiConfig";
 import { useTranslation } from "next-i18next";
+import { useRouter } from "next/router";
 
 // Dynamic import for react-leaflet
 const MapLib = dynamic(
@@ -56,8 +57,12 @@ const MapComponent = ({
   const [defaultGroupIndex, setDefaultGroupIndex] = useState(1);  // default group index for the first result
   const [groupMapping, setGroupMapping] = useState({}); // mapping of group index to default results,index for weighted results
   const [cityBoundaries, setCityBoundaries] = useState({});
+  const [showSurveyPrompt, setShowSurveyPrompt] = useState(false);
+  const surveyPromptShownRef = useRef(false);
+  const surveyLinkRef = useRef(null);
 
   const { t } = useTranslation("common");
+  const router = useRouter();
 
   const getSelectedCity = () =>
     (typeof window !== "undefined" &&
@@ -66,6 +71,18 @@ const MapComponent = ({
   const [selectedCity, setSelectedCity] = useState(getSelectedCity);
 
   const mapRegionLabel = t("aria_map_region");
+  const maybeShowSurveyPrompt = () => {
+    if (
+      surveyPromptShownRef.current ||
+      router.locale !== "de" ||
+      selectedCity !== "hamburg"
+    ) {
+      return;
+    }
+
+    surveyPromptShownRef.current = true;
+    setShowSurveyPrompt(true);
+  };
 
   const layerTypeMap = useMemo(
     () => buildLayerTypeMap(availableLayers),
@@ -113,6 +130,24 @@ const MapComponent = ({
     window.addEventListener("keydown", onKeyDown, true);
     return () => window.removeEventListener("keydown", onKeyDown, true);
   }, [isCalculating]);
+
+  useEffect(() => {
+    if (!showSurveyPrompt) return;
+
+    requestAnimationFrame(() => {
+      surveyLinkRef.current?.focus();
+    });
+
+    const onKeyDown = (e) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        setShowSurveyPrompt(false);
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown, true);
+    return () => window.removeEventListener("keydown", onKeyDown, true);
+  }, [showSurveyPrompt]);
 
   // load city boundary
   useEffect(() => {
@@ -356,6 +391,7 @@ const MapComponent = ({
       if (startPoints.length === 0) return;
       const [lon, lat] = startPoints[startPoints.length - 1]; // latest point
       const key = `${lat},${lon},${walkingTime},${walkingSpeed}`; //store basic parameters for default catchment area
+      let shouldShowSurveyPrompt = false;
       setIsCalculating(true);
       const controller = new AbortController();
       abortRef.current = controller;
@@ -439,10 +475,12 @@ const MapComponent = ({
               groupIndex: newGroupIndex
             }
           ]);
+          shouldShowSurveyPrompt = true;
         } else {
           currentGroupIndex = groupMapping[key];
           setDefaultGroupIndex(currentGroupIndex);
           defaultArea = defaultResultCache[key].area;
+          shouldShowSurveyPrompt = true;
         }
 
         // --------- Step 2: Weighted Result (with comfort features) ---------
@@ -516,6 +554,9 @@ const MapComponent = ({
         setIsCalculating(false);
         setCalcStage("");
         setComputeAccessibility(false);
+        if (shouldShowSurveyPrompt) {
+          maybeShowSurveyPrompt();
+        }
       }
     };
   
@@ -673,6 +714,40 @@ const MapComponent = ({
             className={sty.mouseHintIcon}
             draggable="false"
           />
+        </div>
+      )}
+
+      {showSurveyPrompt && (
+        <div
+          className={sty.surveyOverlay}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="survey-prompt-title"
+          onClick={() => setShowSurveyPrompt(false)}
+        >
+          <div
+            className={sty.surveyDialog}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <h2 id="survey-prompt-title" className={sty.surveyTitle}>
+              Feedback willkommen!
+            </h2>
+            <p className={sty.surveyText}>
+              <strong>Sie haben CAT ausprobiert?</strong>
+              <br />
+              Helfen Sie uns das Tool zu verbessern.
+            </p>
+            <p className={sty.surveyLinkIntro}>Zur Umfrage:</p>
+            <a
+              ref={surveyLinkRef}
+              className={sty.surveyLink}
+              href="https://form.typeform.com/to/SjBF2goT"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              https://form.typeform.com/to/SjBF2goT
+            </a>
+          </div>
         </div>
       )}
 
