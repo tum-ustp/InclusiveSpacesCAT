@@ -196,6 +196,33 @@
   font-weight: 700;
 }
 
+.surveyCloseButton {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #ffffff;
+  font-size: 28px;
+  line-height: 1;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.surveyCloseButton:hover,
+.surveyCloseButton:focus-visible {
+  background: rgba(255, 255, 255, 0.18);
+  outline: 2px solid #ffffff;
+  outline-offset: 2px;
+}
+
 .surveyText {
   margin: 0 auto;
   max-width: 420px;
@@ -235,6 +262,31 @@
   outline-offset: 2px;
 }
 
+.surveyReopenButton {
+  position: absolute;
+  top: 120px;
+  right: 16px;
+  z-index: 9000;
+  min-height: 40px;
+  padding: 8px 14px;
+  border: 2px solid #5045a0;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #332a72;
+  box-shadow: 0 8px 24px rgba(14, 20, 34, 0.18);
+  font-size: 16px;
+  line-height: 1.2;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.surveyReopenButton:hover,
+.surveyReopenButton:focus-visible {
+  background: #f0eefc;
+  outline: 2px solid #0a84ff;
+  outline-offset: 2px;
+}
+
 @media (max-width: 520px) {
   .surveyOverlay {
     align-items: flex-end;
@@ -251,6 +303,11 @@
     font-size: 22px;
   }
 
+  .surveyCloseButton {
+    top: 8px;
+    right: 10px;
+  }
+
   .surveyText {
     font-size: 16px;
     padding: 0 24px;
@@ -265,6 +322,14 @@
   .surveyLink {
     max-width: calc(100% - 48px);
     font-size: 15px;
+  }
+
+  .surveyReopenButton {
+    top: 92px;
+    right: 12px;
+    min-height: 36px;
+    padding: 7px 12px;
+    font-size: 14px;
   }
 }
 

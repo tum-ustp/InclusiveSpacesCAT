@@ -8,7 +8,6 @@ import sty from './MapComponent.module.css';
 import {getStyle, useCircleMarker,isWmsLayer, buildLayerTypeMap, layerGroupMap, wmsLayerComponents} from "./LayerStyleManager"; 
 import { HAMBURG_FACILITY_POI_LAYERS } from "./poiConfig";
 import { useTranslation } from "next-i18next";
-import { useRouter } from "next/router";
 
 // Dynamic import for react-leaflet
 const MapLib = dynamic(
@@ -62,7 +61,6 @@ const MapComponent = ({
   const surveyLinkRef = useRef(null);
 
   const { t } = useTranslation("common");
-  const router = useRouter();
 
   const getSelectedCity = () =>
     (typeof window !== "undefined" &&
@@ -71,17 +69,23 @@ const MapComponent = ({
   const [selectedCity, setSelectedCity] = useState(getSelectedCity);
 
   const mapRegionLabel = t("aria_map_region");
+  const canShowSurveyPrompt = ["hamburg", "penteli"].includes(selectedCity);
+  const surveyPromptUrls = {
+    hamburg: "https://form.typeform.com/to/SjBF2goT",
+    penteli: "https://form.typeform.com/to/EEYJNGJM"
+  };
+  const surveyPromptUrl = surveyPromptUrls[selectedCity] || "";
+
   const maybeShowSurveyPrompt = () => {
-    if (
-      surveyPromptShownRef.current ||
-      router.locale !== "de" ||
-      selectedCity !== "hamburg"
-    ) {
+    if (surveyPromptShownRef.current || !canShowSurveyPrompt) {
       return;
     }
 
     surveyPromptShownRef.current = true;
     setShowSurveyPrompt(true);
+  };
+  const closeSurveyPrompt = () => {
+    setShowSurveyPrompt(false);
   };
 
   const layerTypeMap = useMemo(
@@ -141,7 +145,7 @@ const MapComponent = ({
     const onKeyDown = (e) => {
       if (e.key === "Escape") {
         e.preventDefault();
-        setShowSurveyPrompt(false);
+        closeSurveyPrompt();
       }
     };
 
@@ -723,32 +727,54 @@ const MapComponent = ({
           role="dialog"
           aria-modal="true"
           aria-labelledby="survey-prompt-title"
-          onClick={() => setShowSurveyPrompt(false)}
+          onClick={closeSurveyPrompt}
         >
           <div
             className={sty.surveyDialog}
             onClick={(event) => event.stopPropagation()}
           >
+            <button
+              type="button"
+              className={sty.surveyCloseButton}
+              aria-label={t("modal_close")}
+              onClick={closeSurveyPrompt}
+            >
+              {"\u00d7"}
+            </button>
             <h2 id="survey-prompt-title" className={sty.surveyTitle}>
-              Feedback willkommen!
+              {t("survey_prompt_title")}
             </h2>
             <p className={sty.surveyText}>
-              <strong>Sie haben CAT ausprobiert?</strong>
+              <strong>{t("survey_prompt_question")}</strong>
               <br />
-              Helfen Sie uns das Tool zu verbessern.
+              {t("survey_prompt_body")}
             </p>
-            <p className={sty.surveyLinkIntro}>Zur Umfrage:</p>
+            <p className={sty.surveyLinkIntro}>
+              {t("survey_prompt_link_intro")}
+            </p>
             <a
               ref={surveyLinkRef}
               className={sty.surveyLink}
-              href="https://form.typeform.com/to/SjBF2goT"
+              href={surveyPromptUrl}
               target="_blank"
               rel="noopener noreferrer"
             >
-              https://form.typeform.com/to/SjBF2goT
+              {surveyPromptUrl}
             </a>
           </div>
         </div>
+      )}
+
+      {!showSurveyPrompt && surveyPromptShownRef.current && canShowSurveyPrompt && (
+        <button
+          type="button"
+          className={sty.surveyReopenButton}
+          onClick={() => setShowSurveyPrompt(true)}
+          aria-haspopup="dialog"
+          aria-controls="survey-prompt-title"
+        >
+          {t("survey_prompt_reopen")}
+        </button>
       )}
 
       <p id="map-kbd-desc" className={sty.srOnly}>

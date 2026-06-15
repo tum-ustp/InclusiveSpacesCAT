@@ -536,6 +536,11 @@
   "legend_without_factors": "(χωρίς παράγοντες άνεσης)",
   "alert_no_area_time_speed": "Δεν βρέθηκε προσβάσιμη περιοχή για αυτόν τον χρόνο/ταχύτητα περπατήματος. Δοκιμάστε άλλη ρύθμιση.",
   "alert_no_area_comfort": "Οι επιλεγμένες ρυθμίσεις άνεσης οδηγούν σε μη προσβάσιμη περιοχή. Δοκιμάστε να προσαρμόσετε τα sliders.",
+  "survey_prompt_title": "Τα σχόλιά σας είναι ευπρόσδεκτα!",
+  "survey_prompt_question": "Δοκιμάσατε το CAT;",
+  "survey_prompt_body": "Βοηθήστε μας να βελτιώσουμε το εργαλείο.",
+  "survey_prompt_link_intro": "Προς το ερωτηματολόγιο:",
+  "survey_prompt_reopen": "Ερωτηματολόγιο",
     
   "display_noise": "Θόρυβος",
   "display_light": "Φωτισμός Δρόμου",

@@ -536,6 +536,11 @@
   "legend_without_factors": "(ohne Komfortfaktoren)",
   "alert_no_area_time_speed": "Für diese Gehzeit/Geschwindigkeit wurde kein erreichbares Gebiet gefunden. Bitte andere Einstellung wählen.",
   "alert_no_area_comfort": "Mit den gewählten Komforteinstellungen ergibt sich kein erreichbares Gebiet. Passe die Regler an.",
+  "survey_prompt_title": "Feedback willkommen!",
+  "survey_prompt_question": "Sie haben CAT ausprobiert?",
+  "survey_prompt_body": "Helfen Sie uns das Tool zu verbessern.",
+  "survey_prompt_link_intro": "Zur Umfrage:",
+  "survey_prompt_reopen": "Umfrage",
   
   "display_noise": "Lärm", 
   "display_light": "Straßenbeleuchtung",
