@@ -8,6 +8,7 @@ import sty from './MapComponent.module.css';
 import {getStyle, useCircleMarker,isWmsLayer, buildLayerTypeMap, layerGroupMap, wmsLayerComponents} from "./LayerStyleManager"; 
 import { HAMBURG_FACILITY_POI_LAYERS } from "./poiConfig";
 import { useTranslation } from "next-i18next";
+import SurveyInvite from "./surveyInvite";
 
 // Dynamic import for react-leaflet
 const MapLib = dynamic(
@@ -56,9 +57,7 @@ const MapComponent = ({
   const [defaultGroupIndex, setDefaultGroupIndex] = useState(1);  // default group index for the first result
   const [groupMapping, setGroupMapping] = useState({}); // mapping of group index to default results,index for weighted results
   const [cityBoundaries, setCityBoundaries] = useState({});
-  const [showSurveyPrompt, setShowSurveyPrompt] = useState(false);
-  const surveyPromptShownRef = useRef(false);
-  const surveyLinkRef = useRef(null);
+  const [surveyInviteTrigger, setSurveyInviteTrigger] = useState(0);
 
   const { t } = useTranslation("common");
 
@@ -69,23 +68,8 @@ const MapComponent = ({
   const [selectedCity, setSelectedCity] = useState(getSelectedCity);
 
   const mapRegionLabel = t("aria_map_region");
-  const canShowSurveyPrompt = ["hamburg", "penteli"].includes(selectedCity);
-  const surveyPromptUrls = {
-    hamburg: "https://form.typeform.com/to/SjBF2goT",
-    penteli: "https://form.typeform.com/to/EEYJNGJM"
-  };
-  const surveyPromptUrl = surveyPromptUrls[selectedCity] || "";
-
-  const maybeShowSurveyPrompt = () => {
-    if (surveyPromptShownRef.current || !canShowSurveyPrompt) {
-      return;
-    }
-
-    surveyPromptShownRef.current = true;
-    setShowSurveyPrompt(true);
-  };
-  const closeSurveyPrompt = () => {
-    setShowSurveyPrompt(false);
+  const requestSurveyInvite = () => {
+    setSurveyInviteTrigger((prev) => prev + 1);
   };
 
   const layerTypeMap = useMemo(
@@ -134,24 +118,6 @@ const MapComponent = ({
     window.addEventListener("keydown", onKeyDown, true);
     return () => window.removeEventListener("keydown", onKeyDown, true);
   }, [isCalculating]);
-
-  useEffect(() => {
-    if (!showSurveyPrompt) return;
-
-    requestAnimationFrame(() => {
-      surveyLinkRef.current?.focus();
-    });
-
-    const onKeyDown = (e) => {
-      if (e.key === "Escape") {
-        e.preventDefault();
-        closeSurveyPrompt();
-      }
-    };
-
-    window.addEventListener("keydown", onKeyDown, true);
-    return () => window.removeEventListener("keydown", onKeyDown, true);
-  }, [showSurveyPrompt]);
 
   // load city boundary
   useEffect(() => {
@@ -559,7 +525,7 @@ const MapComponent = ({
         setCalcStage("");
         setComputeAccessibility(false);
         if (shouldShowSurveyPrompt) {
-          maybeShowSurveyPrompt();
+          requestSurveyInvite();
         }
       }
     };
@@ -721,61 +687,7 @@ const MapComponent = ({
         </div>
       )}
 
-      {showSurveyPrompt && (
-        <div
-          className={sty.surveyOverlay}
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="survey-prompt-title"
-          onClick={closeSurveyPrompt}
-        >
-          <div
-            className={sty.surveyDialog}
-            onClick={(event) => event.stopPropagation()}
-          >
-            <button
-              type="button"
-              className={sty.surveyCloseButton}
-              aria-label={t("modal_close")}
-              onClick={closeSurveyPrompt}
-            >
-              {"\u00d7"}
-            </button>
-            <h2 id="survey-prompt-title" className={sty.surveyTitle}>
-              {t("survey_prompt_title")}
-            </h2>
-            <p className={sty.surveyText}>
-              <strong>{t("survey_prompt_question")}</strong>
-              <br />
-              {t("survey_prompt_body")}
-            </p>
-            <p className={sty.surveyLinkIntro}>
-              {t("survey_prompt_link_intro")}
-            </p>
-            <a
-              ref={surveyLinkRef}
-              className={sty.surveyLink}
-              href={surveyPromptUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              {surveyPromptUrl}
-            </a>
-          </div>
-        </div>
-      )}
-
-      {!showSurveyPrompt && surveyPromptShownRef.current && canShowSurveyPrompt && (
-        <button
-          type="button"
-          className={sty.surveyReopenButton}
-          onClick={() => setShowSurveyPrompt(true)}
-          aria-haspopup="dialog"
-          aria-controls="survey-prompt-title"
-        >
-          {t("survey_prompt_reopen")}
-        </button>
-      )}
+      <SurveyInvite city={selectedCity} trigger={surveyInviteTrigger} />
 
       <p id="map-kbd-desc" className={sty.srOnly}>
         {t("sr_map_keyboard_instructions")}
