@@ -1,5 +1,6 @@
 import '@/styles/globals.css'
 import { PlasmicRootProvider } from "@plasmicapp/react-web";
+import { Analytics } from "@vercel/analytics/react";
 import Head from "next/head";
 import Link from "next/link";
 import { appWithTranslation } from "next-i18next";
@@ -18,6 +19,7 @@ function MyApp({ Component, pageProps }) {
 
       <PlasmicRootProvider Head={Head} Link={Link}>
         <Component {...pageProps} />
+        <Analytics />
       </PlasmicRootProvider>
     </>
   );
