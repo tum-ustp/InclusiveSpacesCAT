@@ -1,5 +1,6 @@
 // pages/api/accessibility.js
-import { Pool } from "pg"; 
+import { Pool } from "pg";
+import { performance } from "node:perf_hooks";
 
 const pool = new Pool({
   connectionString: "postgresql://postgres.tcxrvmwzddsyivnfurdx:incspace123456@aws-0-eu-central-1.pooler.supabase.com:6543/postgres",
@@ -7,6 +8,7 @@ const pool = new Pool({
 });
 
 export default async function handler(req, res) { 
+const requestStart = performance.now();
 const { lat, lon, time, speed, n, city } = req.query;
 const cityId = (city || "hamburg").toLowerCase();
 
@@ -29,12 +31,14 @@ const nWeights = Number.isFinite(nInt) && nInt > 0 ? nInt : 1; //number of weigh
   }
 
   try { 
+    const nearestVertexStart = performance.now();
     const nearestVertexResult = await pool.query(`
       SELECT id
       FROM ${verticesTable}
       ORDER BY the_geom <-> ST_SetSRID(ST_MakePoint($1, $2), 4326)
       LIMIT 1;
     `, [lon, lat]);
+    const nearestVertexMs = performance.now() - nearestVertexStart;
 
     const startVid = nearestVertexResult.rows[0]?.id;
     if (!startVid) {
@@ -62,6 +66,7 @@ const nWeights = Number.isFinite(nInt) && nInt > 0 ? nInt : 1; //number of weigh
     const facilityVariable = parseFloat(req.query.facility) || 1.0;
     const pedestrianFlowVariable = parseFloat(req.query.pedestrianFlow) || 1.0;
  
+    const routingQueryStart = performance.now();
     const result = await pool.query(`
       SELECT json_build_object(
         'type', 'FeatureCollection',
@@ -129,19 +134,37 @@ const nWeights = Number.isFinite(nInt) && nInt > 0 ? nInt : 1; //number of weigh
         kerbsHighVariable,
         facilityVariable,
         pedestrianFlowVariable]);
+    const routingQueryMs = performance.now() - routingQueryStart;
+    const apiTotalMs = performance.now() - requestStart;
       
  
     const geojson = result.rows[0].geojson;
+    const timing = {
+      nearestVertexMs: Number(nearestVertexMs.toFixed(2)),
+      pgrDrivingDistanceMs: Number(routingQueryMs.toFixed(2)),
+      apiTotalMs: Number(apiTotalMs.toFixed(2)),
+    };
+
+    res.setHeader(
+      "Server-Timing",
+      [
+        `nearest-vertex;dur=${timing.nearestVertexMs}`,
+        `pgr-driving-distance;dur=${timing.pgrDrivingDistanceMs}`,
+        `api-total;dur=${timing.apiTotalMs}`
+      ].join(", ")
+    );
 
     if (!geojson || !geojson.features || geojson.features.length === 0) {
       return res.status(200).json({
         roads: null,
         message: "No reachable roads found for this setting.",
+        timing,
       });
     }
  
     res.status(200).json({
         roads: result.rows[0].geojson, 
+        timing,
       });
 
   } catch (error) {

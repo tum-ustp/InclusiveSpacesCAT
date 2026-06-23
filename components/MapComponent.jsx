@@ -20,6 +20,16 @@ proj4.defs("EPSG:4326", "+proj=longlat +datum=WGS84 +no_defs");
 proj4.defs("EPSG:25832", "+proj=utm +zone=32 +ellps=WGS84 +datum=WGS84 +units=m +no_defs");
 
 const EXCLUDED_HAMBURG_FACILITY_POI = "poi_hh_haltstelle";
+
+const markPerformance = (name) => {
+  if (typeof performance === "undefined" || !performance.mark) return;
+  performance.mark(name);
+};
+
+const measurePerformance = (name, startMark, endMark) => {
+  if (typeof performance === "undefined" || !performance.measure) return;
+  performance.measure(name, startMark, endMark);
+};
  
 const MapComponent = ({ 
   cityCenter = [53.5503, 9.9920],
@@ -136,6 +146,77 @@ const MapComponent = ({
     Array.isArray(geojson.features) &&
     geojson.features.length > 0;
 
+  const buildBufferedAreaWithTiming = (roads, bufferDistance, phaseLabel) => {
+    const runId = `${phaseLabel}-${Date.now()}`;
+    const startMark = `accessibility-turf-start-${runId}`;
+    const endMark = `accessibility-turf-end-${runId}`;
+    markPerformance(startMark);
+
+    const fc = turf.featureCollection(roads);
+    const combined = turf.combine(fc);
+    const simplified = turf.simplify(combined, { tolerance: 0.002, highQuality: false });
+    const buffered = turf.buffer(simplified, bufferDistance, { units: "kilometers" });
+    const cleaned = {
+      type: "FeatureCollection",
+      features: buffered.features.map((f) => {
+        if (f.geometry.type === "Polygon") {
+          return turf.polygon([f.geometry.coordinates[0]]);
+        }
+        if (f.geometry.type === "MultiPolygon") {
+          return turf.multiPolygon(f.geometry.coordinates.map((p) => [p[0]]));
+        }
+        return f;
+      })
+    };
+
+    let areaSquareMeters = 0;
+    cleaned.features.forEach((feature) => {
+      areaSquareMeters += turf.area(feature);
+    });
+
+    markPerformance(endMark);
+    measurePerformance(`accessibility:turf:${phaseLabel}`, startMark, endMark);
+
+    const turfMs =
+      typeof performance !== "undefined"
+        ? Number((performance.getEntriesByName(`accessibility:turf:${phaseLabel}`).at(-1)?.duration || 0).toFixed(2))
+        : 0;
+
+    return {
+      cleaned,
+      areaHectares: areaSquareMeters / 10000,
+      turfMs,
+    };
+  };
+
+  const logAccessibilityTiming = (phaseLabel, requestTiming, turfMs) => {
+    const serverTiming = requestTiming?.serverTiming || {};
+    const fetchAndParseMs = Number((requestTiming?.fetchAndParseMs || 0).toFixed(2));
+    const apiTotalMs = Number((serverTiming.apiTotalMs || 0).toFixed(2));
+    const pgrDrivingDistanceMs = Number((serverTiming.pgrDrivingDistanceMs || 0).toFixed(2));
+    const networkAndBrowserParseMs = Math.max(0, Number((fetchAndParseMs - apiTotalMs).toFixed(2)));
+    const postPgrPipelineMs = Number(
+      (
+        Math.max(0, apiTotalMs - pgrDrivingDistanceMs) +
+        networkAndBrowserParseMs +
+        turfMs
+      ).toFixed(2)
+    );
+
+    console.groupCollapsed(`[accessibility timing] ${phaseLabel}`);
+    console.table({
+      pgrDrivingDistanceMs,
+      postPgrPipelineMs,
+      nearestVertexMs: Number((serverTiming.nearestVertexMs || 0).toFixed(2)),
+      apiTotalMs,
+      fetchAndParseMs,
+      networkAndBrowserParseMs,
+      turfProcessingMs: turfMs,
+      endToEndMs: Number((fetchAndParseMs + turfMs).toFixed(2)),
+    });
+    console.groupEnd();
+  };
+
   const colorPool = [
     "#f53c16", "#584898", "#c69a43 ", "#0fa321", "#924467"
   ]; // color pool for different calculation results/ accessibility analysis
@@ -245,7 +326,7 @@ const MapComponent = ({
    }, [selectedLayers, selectedCity, layerTypeMap, availableLayerKeys]);
   
   // Fetch accessibility data from the backend 
-  const fetchAccessibilityFromBackend = async (lat, lon, time, speed, variableSettings, signal) => {
+  const fetchAccessibilityFromBackend = async (lat, lon, time, speed, variableSettings, signal, phaseLabel) => {
     try {
       const selected = enabledVariables || [];
 
@@ -277,9 +358,27 @@ const MapComponent = ({
 
       params.append("city", selectedCity);
 
+      const runId = `${phaseLabel}-${Date.now()}`;
+      const startMark = `accessibility-fetch-start-${runId}`;
+      const endMark = `accessibility-fetch-end-${runId}`;
+      const measureName = `accessibility:fetch:${phaseLabel}`;
+      markPerformance(startMark);
       const res = await fetch(`/api/accessibility?${params}`, { signal });
       if (!res.ok) throw new Error("API call failed");
-      return await res.json();
+      const data = await res.json();
+      markPerformance(endMark);
+      measurePerformance(measureName, startMark, endMark);
+
+      return {
+        ...data,
+        requestTiming: {
+          fetchAndParseMs:
+            typeof performance !== "undefined"
+              ? Number((performance.getEntriesByName(measureName).at(-1)?.duration || 0).toFixed(2))
+              : 0,
+          serverTiming: data?.timing || null,
+        }
+      };
     } catch (err) {
       if (err?.name === "AbortError") throw err;
       console.error("Failed to obtain reachability area:", err);
@@ -386,7 +485,15 @@ const MapComponent = ({
             temperatureSummer: 1, temperatureWinter: 1
           };
 
-          const defaultRes = await fetchAccessibilityFromBackend(lat, lon, walkingTime, walkingSpeed, defaultVars, controller.signal);
+          const defaultRes = await fetchAccessibilityFromBackend(
+            lat,
+            lon,
+            walkingTime,
+            walkingSpeed,
+            defaultVars,
+            controller.signal,
+            "default"
+          );
           if (!defaultRes || !defaultRes.roads) {
             alert(t("err_api_failed_try_again"));
             setComputeAccessibility(false);
@@ -400,29 +507,14 @@ const MapComponent = ({
             return;
           }
           const defaultRoads = defaultRes.roads.features;
-          const fc = turf.featureCollection(defaultRoads);
-
-          const combined = turf.combine(fc);
-          const simplified = turf.simplify(combined, { tolerance: 0.002, highQuality: false });
-          
-          const buffered = turf.buffer(simplified, bufferDistance, { units: "kilometers" });
-          const cleaned = {
-            type: "FeatureCollection",
-            features: buffered.features.map(f => {
-              if (f.geometry.type === "Polygon") {
-                return turf.polygon([f.geometry.coordinates[0]]);
-              } else if (f.geometry.type === "MultiPolygon") {
-                return turf.multiPolygon(f.geometry.coordinates.map(p => [p[0]]));
-              }
-              return f;
-            })
-          };
-
-          let area = 0;
-          cleaned.features.forEach(f => {
-            area += turf.area(f);
-          });
-          defaultArea = area / 10000;
+          const defaultProcessing = buildBufferedAreaWithTiming(
+            defaultRoads,
+            bufferDistance,
+            "default"
+          );
+          const cleaned = defaultProcessing.cleaned;
+          defaultArea = defaultProcessing.areaHectares;
+          logAccessibilityTiming("default", defaultRes.requestTiming, defaultProcessing.turfMs);
 
           setDefaultResultCache(prev => ({ ...prev, [key]: { roads: defaultRes.roads, hull: cleaned, area: defaultArea } }));
           setReachableRoadsData(prev => [...prev, defaultRes.roads]);
@@ -455,7 +547,15 @@ const MapComponent = ({
 
         // --------- Step 2: Weighted Result (with comfort features) ---------
         if (enabledVariables.length > 0) {
-          const weightedRes = await fetchAccessibilityFromBackend(lat, lon, walkingTime, walkingSpeed, layerValues, controller.signal);
+          const weightedRes = await fetchAccessibilityFromBackend(
+            lat,
+            lon,
+            walkingTime,
+            walkingSpeed,
+            layerValues,
+            controller.signal,
+            "weighted"
+          );
           if (!weightedRes || !weightedRes.roads) {
             alert(t("err_api_failed_try_again"));
             return;
@@ -465,28 +565,14 @@ const MapComponent = ({
             return;
           }
           const weightedRoads = weightedRes.roads.features;
-
-          const fc2 = turf.featureCollection(weightedRoads);
-          const combined2 = turf.combine(fc2);
-          const simplified2 = turf.simplify(combined2, { tolerance: 0.002, highQuality: false });
-          const buffered2 = turf.buffer(simplified2, bufferDistance, { units: "kilometers" });
-          const cleaned2 = {
-            type: "FeatureCollection",
-            features: buffered2.features.map(f => {
-              if (f.geometry.type === "Polygon") {
-                return turf.polygon([f.geometry.coordinates[0]]);
-              } else if (f.geometry.type === "MultiPolygon") {
-                return turf.multiPolygon(f.geometry.coordinates.map(p => [p[0]]));
-              }
-              return f;
-            })
-          };
-
-          let weightedArea = 0;
-          cleaned2.features.forEach(f => {
-            weightedArea += turf.area(f);
-          });
-          weightedArea = weightedArea / 10000;
+          const weightedProcessing = buildBufferedAreaWithTiming(
+            weightedRoads,
+            bufferDistance,
+            "weighted"
+          );
+          const cleaned2 = weightedProcessing.cleaned;
+          let weightedArea = weightedProcessing.areaHectares;
+          logAccessibilityTiming("weighted", weightedRes.requestTiming, weightedProcessing.turfMs);
 
           const ratio = (weightedArea / defaultArea).toFixed(2);
           const color = colorPool[resultMetadata.length % colorPool.length];
