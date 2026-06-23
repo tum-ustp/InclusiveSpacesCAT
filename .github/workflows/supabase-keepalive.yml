@@ -1,0 +1,31 @@
+name: Supabase keep-alive
+
+on:
+  schedule:
+    # Monday and Thursday at 07:17 UTC
+    - cron: "17 7 * * 1,4"
+  # Allows manual runs for verification
+  workflow_dispatch:
+
+jobs:
+  heartbeat:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Update Supabase heartbeat
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+        run: |
+          set -euo pipefail
+
+          curl \
+            --fail-with-body \
+            --silent \
+            --show-error \
+            --request PATCH \
+            "${SUPABASE_URL}/rest/v1/project_heartbeat?id=eq.1" \
+            --header "apikey: ${SUPABASE_SECRET_KEY}" \
+            --header "Content-Type: application/json" \
+            --header "Prefer: return=representation" \
+            --data "{\"last_seen\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}"
