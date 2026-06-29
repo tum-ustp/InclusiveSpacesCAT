@@ -3,7 +3,7 @@
 /* tslint:disable */
 /* prettier-ignore-start */
 import React from "react";
-import { classNames } from "@plasmicapp/react-web";
+import {classNames} from "@plasmicapp/react-web";
 
 export function ArrowSvgIcon(props) {
   const { className, style, title, ...restProps } = props;

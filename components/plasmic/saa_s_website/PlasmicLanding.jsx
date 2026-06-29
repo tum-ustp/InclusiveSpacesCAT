@@ -3,6 +3,7 @@ import { useRouter } from "next/router";
 import Header from "../../Header";
 import sty from "./PlasmicLanding.module.css";
 import { useTranslation } from "next-i18next";
+import { VideosSection } from "./landing_components/VideosSection";
 
 export default function PlasmicLanding() {
   const router = useRouter();
@@ -230,6 +231,8 @@ export default function PlasmicLanding() {
           </div> 
         </div> */}
       </section> 
+
+      <VideosSection />
 
       {/* === Contact info (footer) === */}
       <section className={sty.contactSection}>
