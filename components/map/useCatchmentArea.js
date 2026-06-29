@@ -11,6 +11,7 @@ import {
 } from "./performance";
 
 const EXCLUDED_HAMBURG_FACILITY_POI = "poi_hh_haltstelle";
+const ACCESSIBILITY_GEOMETRY_MODE = "simplified";
 
 // check if the generated reachability area is valid GeoJSON
 export const isValidGeoJSON = (geojson) =>
@@ -149,8 +150,8 @@ export const useCatchmentArea = ({
         pedestrianFlow: selected.includes("pedestrianFlow") ? variableSettings.pedestrianFlow ?? 1 : 1
       });
       params.append("n", Math.max(1, selected.length));
-
       params.append("city", selectedCity);
+      params.append("geometry", ACCESSIBILITY_GEOMETRY_MODE);
 
       const runId = `${phaseLabel}-${Date.now()}`;
       const startMark = `accessibility-fetch-start-${runId}`;

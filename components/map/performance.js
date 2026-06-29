@@ -147,9 +147,14 @@ export const logAccessibilityTiming = (phaseLabel, requestTiming, turfTiming, in
   const postServerToClientReadyMs = Number(
     (networkAndBrowserParseMs + turfProcessingMs).toFixed(2)
   );
+  const serverFeatureCount = Number(serverTiming.featureCount || 0);
+  const serverRawCoordinateCount = Number(serverTiming.rawCoordinateCount || 0);
+  const serverOutputCoordinateCount = Number(serverTiming.outputCoordinateCount || 0);
+  const responseBytes = Number(serverTiming.responseBytes || 0);
 
   console.groupCollapsed(`[accessibility timing] ${phaseLabel}`);
   console.table({
+    geometryMode: serverTiming.geometryMode || "full",
     routingQueryMs,
     apiOverheadMs,
     nearestVertexMs,
@@ -157,8 +162,12 @@ export const logAccessibilityTiming = (phaseLabel, requestTiming, turfTiming, in
     fetchAndParseMs,
     networkAndBrowserParseMs,
     postServerToClientReadyMs,
-    featureCount: inputGeometryStats?.featureCount || 0,
-    coordinateCount: inputGeometryStats?.coordinateCount || 0,
+    serverFeatureCount,
+    serverRawCoordinateCount,
+    serverOutputCoordinateCount,
+    responseBytes,
+    clientFeatureCount: inputGeometryStats?.featureCount || 0,
+    clientCoordinateCount: inputGeometryStats?.coordinateCount || 0,
     combineMs: Number((turfTiming?.combineMs || 0).toFixed(2)),
     simplifyMs: Number((turfTiming?.simplifyMs || 0).toFixed(2)),
     bufferMs: Number((turfTiming?.bufferMs || 0).toFixed(2)),
