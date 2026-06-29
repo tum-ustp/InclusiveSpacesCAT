@@ -1,14 +1,15 @@
-import { useState, useEffect, useRef, useMemo } from "react"; 
+import { useState, useEffect, useMemo } from "react"; 
 import dynamic from "next/dynamic";
 import "leaflet/dist/leaflet.css"; 
-import * as turf from "@turf/turf";
 import proj4 from "proj4"; 
-import Legend from "./Legend";
 import sty from './MapComponent.module.css'; 
-import {getStyle, useCircleMarker,isWmsLayer, buildLayerTypeMap, layerGroupMap, wmsLayerComponents} from "./LayerStyleManager"; 
+import {isWmsLayer, buildLayerTypeMap, layerGroupMap} from "./LayerStyleManager";
 import { HAMBURG_FACILITY_POI_LAYERS } from "./poiConfig";
 import { useTranslation } from "next-i18next";
-import SurveyInvite from "./surveyInvite";
+import SurveyInvite from "./map/surveyInvite";
+import ReachabilityLayers from "./map/ReachabilityLayers";
+import { useMapInteractions } from "./map/useMapInteractions";
+import { useCatchmentArea } from "./map/useCatchmentArea";
 
 // Dynamic import for react-leaflet
 const MapLib = dynamic(
@@ -20,16 +21,6 @@ proj4.defs("EPSG:4326", "+proj=longlat +datum=WGS84 +no_defs");
 proj4.defs("EPSG:25832", "+proj=utm +zone=32 +ellps=WGS84 +datum=WGS84 +units=m +no_defs");
 
 const EXCLUDED_HAMBURG_FACILITY_POI = "poi_hh_haltstelle";
-
-const markPerformance = (name) => {
-  if (typeof performance === "undefined" || !performance.mark) return;
-  performance.mark(name);
-};
-
-const measurePerformance = (name, startMark, endMark) => {
-  if (typeof performance === "undefined" || !performance.measure) return;
-  performance.measure(name, startMark, endMark);
-};
  
 const MapComponent = ({ 
   cityCenter = [53.5503, 9.9920],
@@ -57,17 +48,8 @@ const MapComponent = ({
 }) => {
   const [MapModule, setMapModule] = useState(null);
   const [customMarkerIcon, setCustomMarkerIcon] = useState(null);
-  const [reachableRoadsData, setReachableRoadsData] = useState([]); 
-  const [reachableHullData, setReachableHullData] = useState([]); 
   const [geoJsonData, setGeoJsonData] = useState({}); 
-  const [isCalculating, setIsCalculating] = useState(false); // function attachment calculation works? 
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 }); 
-  const [resultMetadata, setResultMetadata] = useState([]); // store metadata for each result/ user setting each time
-  const [defaultResultCache, setDefaultResultCache] = useState({}); // key: `${lat},${lon}`, value: {roads, hull, area}
-  const [defaultGroupIndex, setDefaultGroupIndex] = useState(1);  // default group index for the first result
-  const [groupMapping, setGroupMapping] = useState({}); // mapping of group index to default results,index for weighted results
   const [cityBoundaries, setCityBoundaries] = useState({});
-  const [surveyInviteTrigger, setSurveyInviteTrigger] = useState(0);
 
   const { t } = useTranslation("common");
 
@@ -78,9 +60,6 @@ const MapComponent = ({
   const [selectedCity, setSelectedCity] = useState(getSelectedCity);
 
   const mapRegionLabel = t("aria_map_region");
-  const requestSurveyInvite = () => {
-    setSurveyInviteTrigger((prev) => prev + 1);
-  };
 
   const layerTypeMap = useMemo(
     () => buildLayerTypeMap(availableLayers),
@@ -91,43 +70,49 @@ const MapComponent = ({
     [availableLayers]
   );
 
-  // show calculating status/timer
-  const abortRef = useRef(null);
-  const [calcElapsed, setCalcElapsed] = useState(0);
-  const [calcStage, setCalcStage] = useState("");
-  const cancelCalculation = () => {
-    abortRef.current?.abort();
-    abortRef.current = null;
-    setComputeAccessibility(false);
-    setIsCalculating(false);
-    setCalcStage("");
-  };
+  const {
+    reachableRoadsData,
+    reachableHullData,
+    isCalculating,
+    resultMetadata,
+    surveyInviteTrigger,
+    calcElapsed,
+    calcStage,
+    isValidGeoJSON,
+  } = useCatchmentArea({
+    selectedCity,
+    enabledVariables,
+    walkingTime,
+    walkingSpeed,
+    startPoints,
+    computeAccessibility,
+    setComputeAccessibility,
+    clearTrigger,
+    onClearHandled,
+    layerValues,
+    geoJsonData,
+    setGeoJsonData,
+    t,
+  });
 
-  // (1) timer (Ns)
-  useEffect(() => {
-    if (!isCalculating) {
-      setCalcElapsed(0);
-      return;
-    }
-    const start = Date.now();
-    const timer = window.setInterval(() => {
-      setCalcElapsed(Math.floor((Date.now() - start) / 1000));
-    }, 1000);
-    return () => window.clearInterval(timer);
-  }, [isCalculating]);
-
-  // (2) Esc to cancel
-  useEffect(() => {
-    if (!isCalculating) return;
-    const onKeyDown = (e) => {
-      if (e.key === "Escape") {
-        e.preventDefault();
-        cancelCalculation();
-      }
-    };
-    window.addEventListener("keydown", onKeyDown, true);
-    return () => window.removeEventListener("keydown", onKeyDown, true);
-  }, [isCalculating]);
+  const {
+    mousePosition,
+    handleFocusArea,
+    MapClickHandler,
+    AutoZoomToStart,
+    MakeMapKeyboardAccessible,
+  } = useMapInteractions({
+    MapModule,
+    selectingStart,
+    setSelectingStart,
+    startPoints,
+    setStartPoints,
+    isSearchZoom,
+    setIsSearchZoom,
+    reachableHullData,
+    setHighlightedIndex,
+    t,
+  });
 
   // load city boundary
   useEffect(() => {
@@ -138,88 +123,6 @@ const MapComponent = ({
       setCityBoundaries({ hamburg: hh, penteli: pt });
     });
   }, []);
-
-  // check if the generated reachability area is valid GeoJSON
-  const isValidGeoJSON = (geojson) =>
-    geojson &&
-    geojson.type === "FeatureCollection" &&
-    Array.isArray(geojson.features) &&
-    geojson.features.length > 0;
-
-  const buildBufferedAreaWithTiming = (roads, bufferDistance, phaseLabel) => {
-    const runId = `${phaseLabel}-${Date.now()}`;
-    const startMark = `accessibility-turf-start-${runId}`;
-    const endMark = `accessibility-turf-end-${runId}`;
-    markPerformance(startMark);
-
-    const fc = turf.featureCollection(roads);
-    const combined = turf.combine(fc);
-    const simplified = turf.simplify(combined, { tolerance: 0.002, highQuality: false });
-    const buffered = turf.buffer(simplified, bufferDistance, { units: "kilometers" });
-    const cleaned = {
-      type: "FeatureCollection",
-      features: buffered.features.map((f) => {
-        if (f.geometry.type === "Polygon") {
-          return turf.polygon([f.geometry.coordinates[0]]);
-        }
-        if (f.geometry.type === "MultiPolygon") {
-          return turf.multiPolygon(f.geometry.coordinates.map((p) => [p[0]]));
-        }
-        return f;
-      })
-    };
-
-    let areaSquareMeters = 0;
-    cleaned.features.forEach((feature) => {
-      areaSquareMeters += turf.area(feature);
-    });
-
-    markPerformance(endMark);
-    measurePerformance(`accessibility:turf:${phaseLabel}`, startMark, endMark);
-
-    const turfMs =
-      typeof performance !== "undefined"
-        ? Number((performance.getEntriesByName(`accessibility:turf:${phaseLabel}`).at(-1)?.duration || 0).toFixed(2))
-        : 0;
-
-    return {
-      cleaned,
-      areaHectares: areaSquareMeters / 10000,
-      turfMs,
-    };
-  };
-
-  const logAccessibilityTiming = (phaseLabel, requestTiming, turfMs) => {
-    const serverTiming = requestTiming?.serverTiming || {};
-    const fetchAndParseMs = Number((requestTiming?.fetchAndParseMs || 0).toFixed(2));
-    const apiTotalMs = Number((serverTiming.apiTotalMs || 0).toFixed(2));
-    const pgrDrivingDistanceMs = Number((serverTiming.pgrDrivingDistanceMs || 0).toFixed(2));
-    const networkAndBrowserParseMs = Math.max(0, Number((fetchAndParseMs - apiTotalMs).toFixed(2)));
-    const postPgrPipelineMs = Number(
-      (
-        Math.max(0, apiTotalMs - pgrDrivingDistanceMs) +
-        networkAndBrowserParseMs +
-        turfMs
-      ).toFixed(2)
-    );
-
-    console.groupCollapsed(`[accessibility timing] ${phaseLabel}`);
-    console.table({
-      pgrDrivingDistanceMs,
-      postPgrPipelineMs,
-      nearestVertexMs: Number((serverTiming.nearestVertexMs || 0).toFixed(2)),
-      apiTotalMs,
-      fetchAndParseMs,
-      networkAndBrowserParseMs,
-      turfProcessingMs: turfMs,
-      endToEndMs: Number((fetchAndParseMs + turfMs).toFixed(2)),
-    });
-    console.groupEnd();
-  };
-
-  const colorPool = [
-    "#f53c16", "#584898", "#c69a43 ", "#0fa321", "#924467"
-  ]; // color pool for different calculation results/ accessibility analysis
 
   // Load Leaflet and React-Leaflet dynamically to avoid SSR issues
   useEffect(() => {
@@ -240,23 +143,6 @@ const MapComponent = ({
     loadLibs();
   }, []);
 
-  //selectingStart is true when the user clicks the "Select Start Point" button
-  useEffect(() => {
-    const handleMouseMove = (e) => {
-      setMousePosition({ x: e.clientX, y: e.clientY });
-    };
-  
-    if (selectingStart) {
-      window.addEventListener('mousemove', handleMouseMove);
-    } else {
-      window.removeEventListener('mousemove', handleMouseMove);
-    }
-  
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-    };
-  }, [selectingStart]);
-  
   // Reset the state when resetTrigger changes 
   useEffect(() => {
     if (resetTrigger) {
@@ -264,19 +150,6 @@ const MapComponent = ({
       onResetHandled && onResetHandled(); 
     }
   }, [resetTrigger, onResetHandled]);  
-
-  // clean "get catchment area" result
-  useEffect(() => {
-    if (clearTrigger) {
-      setReachableRoadsData([]);
-      setReachableHullData([]);
-      setResultMetadata([]);
-      setDefaultGroupIndex([]);
-      setDefaultResultCache([]);
-      setGroupMapping([]);
-      onClearHandled?.();
-    }
-  }, [clearTrigger, onClearHandled]);
 
   // Load GeoJSON data for the selected layers (sidebar map layers)
   useEffect(() => {
@@ -325,313 +198,6 @@ const MapComponent = ({
     loadGeoJsonData();
    }, [selectedLayers, selectedCity, layerTypeMap, availableLayerKeys]);
   
-  // Fetch accessibility data from the backend 
-  const fetchAccessibilityFromBackend = async (lat, lon, time, speed, variableSettings, signal, phaseLabel) => {
-    try {
-      const selected = enabledVariables || [];
-
-      const params = new URLSearchParams({
-        lat, lon, time, speed,
-        noise: selected.includes("noise") ? variableSettings.noise ?? 1 : 1,
-        light: selected.includes("light") ? variableSettings.light ?? 1 : 1,
-        trafficLight: selected.includes("trafficLight") ? variableSettings.trafficLight ?? 1 : 1,
-        tactile: selected.includes("tactile_pavement") ? variableSettings.tactile_pavement ?? 1 : 1,
-        tree: selected.includes("tree") ? variableSettings.tree ?? 1 : 1,
-        temperatureSummer: selected.includes("temperatureSummer") ? variableSettings.temperatureSummer ?? 1 : 1,
-        temperatureWinter: selected.includes("temperatureWinter") ? variableSettings.temperatureWinter ?? 1 : 1,
-        blueinf: selected.includes("blueinf") ? variableSettings.blueinf ?? 1 : 1,
-        greeninf: selected.includes("greeninf") ? variableSettings.greeninf ?? 1 : 1,
-        station: selected.includes("station") ? variableSettings.station ?? 1 : 1,
-        wcDisabled: selected.includes("wcDisabled") ? variableSettings.wcDisabled ?? 1 : 1,
-        narrowRoads: selected.includes("narrowRoads") ? variableSettings.narrowRoads ?? 1 : 1,
-        stair: selected.includes("stair") ? variableSettings.stair ?? 1 : 1,
-        obstacle: selected.includes("obstacle") ? variableSettings.obstacle ?? 1 : 1,
-        slope: selected.includes("slope") ? variableSettings.slope ?? 1 : 1,
-        slope_penteli: selected.includes("slope_penteli") ? variableSettings.slope_penteli ?? 1 : 1,
-        unevenSurface: selected.includes("unevenSurface") ? variableSettings.unevenSurface ?? 1 : 1,
-        poorPavement: selected.includes("poorPavement") ? variableSettings.poorPavement ?? 1 : 1,
-        kerbsHigh: selected.includes("kerbsHigh") ? variableSettings.kerbsHigh ?? 1 : 1,
-        facility: selected.includes("facility") ? variableSettings.facility ?? 1 : 1,
-        pedestrianFlow: selected.includes("pedestrianFlow") ? variableSettings.pedestrianFlow ?? 1 : 1
-      });
-      params.append("n", Math.max(1, selected.length));
-
-      params.append("city", selectedCity);
-
-      const runId = `${phaseLabel}-${Date.now()}`;
-      const startMark = `accessibility-fetch-start-${runId}`;
-      const endMark = `accessibility-fetch-end-${runId}`;
-      const measureName = `accessibility:fetch:${phaseLabel}`;
-      markPerformance(startMark);
-      const res = await fetch(`/api/accessibility?${params}`, { signal });
-      if (!res.ok) throw new Error("API call failed");
-      const data = await res.json();
-      markPerformance(endMark);
-      measurePerformance(measureName, startMark, endMark);
-
-      return {
-        ...data,
-        requestTiming: {
-          fetchAndParseMs:
-            typeof performance !== "undefined"
-              ? Number((performance.getEntriesByName(measureName).at(-1)?.duration || 0).toFixed(2))
-              : 0,
-          serverTiming: data?.timing || null,
-        }
-      };
-    } catch (err) {
-      if (err?.name === "AbortError") throw err;
-      console.error("Failed to obtain reachability area:", err);
-      return null;
-    }
-  };  
-
-  // POI/amenities summary in catchment area
-  const POI_LAYER_CONFIG = {
-    hamburg: HAMBURG_FACILITY_POI_LAYERS.filter(
-      (poiLayer) => poiLayer !== EXCLUDED_HAMBURG_FACILITY_POI
-    ),
-    penteli: [
-      "poi_pt_education",
-      "poi_pt_gastronomy",
-      "poi_pt_haltstelle",
-      "poi_pt_health",
-      "poi_pt_library",
-      "poi_pt_music_exhibition",
-      "poi_pt_other",
-      "poi_pt_religious"
-    ]
-  };
-
-  const countPoisInArea = (areaGeoJson) => {
-    const poiLayers = POI_LAYER_CONFIG[selectedCity] || [];
-
-    let poiGroupCounts = {};
-    let totalPOI = 0;
-
-    for (const layerName of poiLayers) {
-      const poiData = geoJsonData[layerName];
-      if (!poiData || !areaGeoJson.features.length) continue;
-
-      const filteredPOI = poiData.features.filter(
-        (f) => f.geometry.type === "Point"
-      );
-
-      const inArea = filteredPOI.filter((f) =>
-        areaGeoJson.features.some((polygon) =>
-          turf.booleanPointInPolygon(f, polygon)
-        )
-      );
-
-      poiGroupCounts[layerName] = inArea.length;
-      totalPOI += inArea.length;
-    }
-
-    return { poiGroupCounts, totalPOI };
-  };
-
-  useEffect(() => {
-    const loadPOIGeoJsons = async () => {
-      const poiLayers = POI_LAYER_CONFIG[selectedCity] || [];
-      const newData = {};
-
-      for (const layer of poiLayers) {
-        try {
-          const res = await fetch(`/data/POI/${layer}.geojson`);
-          const data = await res.json();
-          newData[layer] = data;
-        } catch (err) {
-          console.error("Failed to load:", layer, err);
-        }
-      }
-
-      setGeoJsonData((prev) => ({
-        ...prev,
-        ...newData
-      }));
-    };
-
-    loadPOIGeoJsons();
-  }, [selectedCity]);
-
-  // Perform reachability analysis, calculate road features and hulls
-  useEffect(() => {
-    const performAnalysis = async () => {
-      if (startPoints.length === 0) return;
-      const [lon, lat] = startPoints[startPoints.length - 1]; // latest point
-      const key = `${lat},${lon},${walkingTime},${walkingSpeed}`; //store basic parameters for default catchment area
-      let shouldShowSurveyPrompt = false;
-      setIsCalculating(true);
-      const controller = new AbortController();
-      abortRef.current = controller;
-      setCalcStage(t('loading'));
-
-      try {
-        let defaultArea;
-        let currentGroupIndex;
-
-        const bufferDistance = selectedCity === "penteli" ? 0.1 : 0.02;
-
-        // --------- Step 1: Default Reslut (only speed/time/start) ---------
-        if (!defaultResultCache[key]) {
-          const newGroupIndex = Object.keys(groupMapping).length + 1;
-          setGroupMapping(prev => ({ ...prev, [key]: newGroupIndex }));
-          setDefaultGroupIndex(newGroupIndex);
-          currentGroupIndex = newGroupIndex;
-
-          const defaultVars = {
-            noise: 1, light: 1, trafficLight: 1,
-            tactile_pavement: 1, tree: 1,
-            temperatureSummer: 1, temperatureWinter: 1
-          };
-
-          const defaultRes = await fetchAccessibilityFromBackend(
-            lat,
-            lon,
-            walkingTime,
-            walkingSpeed,
-            defaultVars,
-            controller.signal,
-            "default"
-          );
-          if (!defaultRes || !defaultRes.roads) {
-            alert(t("err_api_failed_try_again"));
-            setComputeAccessibility(false);
-            setIsCalculating(false);
-            return;
-          }
-          if (!isValidGeoJSON(defaultRes.roads)) {
-            alert(t("err_no_reachable_default"));
-            setComputeAccessibility(false);
-            setIsCalculating(false);
-            return;
-          }
-          const defaultRoads = defaultRes.roads.features;
-          const defaultProcessing = buildBufferedAreaWithTiming(
-            defaultRoads,
-            bufferDistance,
-            "default"
-          );
-          const cleaned = defaultProcessing.cleaned;
-          defaultArea = defaultProcessing.areaHectares;
-          logAccessibilityTiming("default", defaultRes.requestTiming, defaultProcessing.turfMs);
-
-          setDefaultResultCache(prev => ({ ...prev, [key]: { roads: defaultRes.roads, hull: cleaned, area: defaultArea } }));
-          setReachableRoadsData(prev => [...prev, defaultRes.roads]);
-          setReachableHullData(prev => [...prev, cleaned]);
- 
-          const { poiGroupCounts, totalPOI } = countPoisInArea(cleaned);
-
-          setResultMetadata(prev => [
-            ...prev,
-            {
-              color: "#676767ff", // default color for the first result
-              layers: [],
-              values: {},
-              time: walkingTime,
-              speed: walkingSpeed,
-              area: defaultArea.toFixed(2),
-              poiCount: totalPOI,
-              poiGroupCounts,
-              isDefault: true,
-              groupIndex: newGroupIndex
-            }
-          ]);
-          shouldShowSurveyPrompt = true;
-        } else {
-          currentGroupIndex = groupMapping[key];
-          setDefaultGroupIndex(currentGroupIndex);
-          defaultArea = defaultResultCache[key].area;
-          shouldShowSurveyPrompt = true;
-        }
-
-        // --------- Step 2: Weighted Result (with comfort features) ---------
-        if (enabledVariables.length > 0) {
-          const weightedRes = await fetchAccessibilityFromBackend(
-            lat,
-            lon,
-            walkingTime,
-            walkingSpeed,
-            layerValues,
-            controller.signal,
-            "weighted"
-          );
-          if (!weightedRes || !weightedRes.roads) {
-            alert(t("err_api_failed_try_again"));
-            return;
-          }
-          if (!isValidGeoJSON(weightedRes.roads)) {
-            alert(t("err_no_reachable_weighted"));
-            return;
-          }
-          const weightedRoads = weightedRes.roads.features;
-          const weightedProcessing = buildBufferedAreaWithTiming(
-            weightedRoads,
-            bufferDistance,
-            "weighted"
-          );
-          const cleaned2 = weightedProcessing.cleaned;
-          let weightedArea = weightedProcessing.areaHectares;
-          logAccessibilityTiming("weighted", weightedRes.requestTiming, weightedProcessing.turfMs);
-
-          const ratio = (weightedArea / defaultArea).toFixed(2);
-          const color = colorPool[resultMetadata.length % colorPool.length];
-
-          setReachableRoadsData(prev => [...prev, weightedRes.roads]);
-          setReachableHullData(prev => [...prev, cleaned2]);
- 
-          const { poiGroupCounts, totalPOI } = countPoisInArea(cleaned2);
-
-          setResultMetadata(prev => [
-            ...prev,
-            {
-              color,
-              layers: enabledVariables,
-              values: { ...layerValues },
-              time: walkingTime,
-              speed: walkingSpeed,
-              area: weightedArea.toFixed(2),
-              weightedRatio: ratio,
-              poiCount: totalPOI,
-              poiGroupCounts,
-              isDefault: false,
-              groupIndex: currentGroupIndex,
-              subIndex: prev.filter(p => p.groupIndex === currentGroupIndex && !p.isDefault).length + 1
-            }
-          ]);
-        }
-
-      } catch (err) {
-        if (err?.name === "AbortError") return;
-        console.error("Reachability analysis error：", err);
-        alert(t("err_unexpected_try_again"));
-      } finally {
-        abortRef.current = null;
-        setIsCalculating(false);
-        setCalcStage("");
-        setComputeAccessibility(false);
-        if (shouldShowSurveyPrompt) {
-          requestSurveyInvite();
-        }
-      }
-    };
-  
-    if (computeAccessibility) {
-      performAnalysis();
-    }
-  }, [computeAccessibility]); 
-
-  // handle legend click to focus on a specific area
-  const handleFocusArea = (idx) => {
-    if (!reachableHullData[idx]) return;
-    const L = require("leaflet");
-    const map = document.querySelector(".leaflet-container")?._leaflet_map;
-    if (!map) return;
-    map.fitBounds(L.geoJSON(reachableHullData[idx]).getBounds(), { padding: [40, 40] });
-    setHighlightedIndex(idx);   
-    console.log("setHighlightedIndex to", idx);
-  };
-
   useEffect(() => {
     const root = document.querySelector("." + sty.leafletMap);
     if (!root) return;
@@ -672,53 +238,7 @@ const MapComponent = ({
   }, [t]);
 
   if (!MapModule || !MapModule.MapContainer) return null;
-  const { MapContainer, TileLayer, GeoJSON, Marker, Popup, Tooltip, useMapEvents, useMap, Pane } = MapModule;
-
-  // Listen for map click events
-  // This component handles the click event on the map to select the starting point
-  const MapClickHandler = () => {
-    useMapEvents({ 
-      click: (e) => {
-        if (selectingStart) {
-          const [lon, lat] = [e.latlng.lng, e.latlng.lat];
-          console.log("Selected starting point：", [lon, lat]);
-          setStartPoints(prev => [...prev, [lon, lat]]);
-          setSelectingStart(false);
-        }
-      }
-      
-    });
-    return null;
-  };
-
-  // zoom to selected start point
-  function AutoZoomToStart({ startPoints, isSearchZoom, setIsSearchZoom }) {
-    const map = useMap();
-    useEffect(() => {
-      if (isSearchZoom && startPoints.length > 0) {
-        const [lon, lat] = startPoints[startPoints.length - 1];
-        map.setView([lat, lon], 16);
-        setIsSearchZoom(false);
-      }
-    }, [startPoints, isSearchZoom, setIsSearchZoom, map]);
-    return null;
-  }
-
-  function MakeMapKeyboardAccessible() {
-    const map = useMap();
-
-    useEffect(() => {
-      if (!map) return;
-      const el = map.getContainer();
-
-      if (!el.hasAttribute("tabindex")) el.setAttribute("tabindex", "0");
-
-      el.setAttribute("aria-label", t("aria_interactive_map"));
-      el.setAttribute("aria-describedby", "map-kbd-desc");
-    }, [map, t]);
-
-    return null;
-  }
+  const { MapContainer, TileLayer, Marker, Popup, Pane } = MapModule;
 
   return (
     <section
@@ -815,123 +335,21 @@ const MapComponent = ({
           ) : null
         ))}
 
-        {/* render boundary */}
-        {cityBoundaries.hamburg && (
-          <GeoJSON
-            data={cityBoundaries.hamburg}
-            style={{
-              color: "#846bfb",
-              weight: 2,
-              fillOpacity: 0,
-              dashArray: "5,5"
-            }}
-          />
-        )}
-        {cityBoundaries.penteli && (
-          <GeoJSON
-            data={cityBoundaries.penteli}
-            style={{
-              color: "#846bfb",
-              weight: 2,
-              fillOpacity: 0,
-              dashArray: "5,5"
-            }}
-          />
-        )}
- 
-        {/* Render WMS layers based on selectedLayers */}
-        {selectedLayers.map((layer) => {
-          if (!isWmsLayer(layer, layerTypeMap)) return null;
-          const WmsComponent = wmsLayerComponents[layer];
-          return WmsComponent ? <WmsComponent key={layer} /> : null;
-        })}
-
-        {/* Render Geojson Layers based on selectedLayers*/}
-        {Object.entries(geoJsonData).map(([layer, data]) => {
-          if (selectedCity === "hamburg" && layer === EXCLUDED_HAMBURG_FACILITY_POI) {
-            return null;
-          }
-          const isPoiLayer = layer.startsWith("poi_");
-          const isHamburgFacilityPoiVisible =
-            selectedCity === "hamburg" &&
-            selectedLayers.includes("facility_hh") &&
-            HAMBURG_FACILITY_POI_LAYERS.includes(layer);
-          if (isPoiLayer && !selectedLayers.includes(layer) && !isHamburgFacilityPoiVisible) {
-            return null;
-          }
-          return (
-            <GeoJSON
-              key={layer}
-              data={data}
-              pointToLayer={(feature, latlng) => {
-                const L = require("leaflet");
-                return L.circleMarker(latlng, getStyle(layer, feature));
-              }}
-              style={(feature) => getStyle(layer, feature)}
-            />
-          )
-        })}
-
-        {/* Legend */}
-        <Legend 
-          resultMetadata={resultMetadata} 
+        <ReachabilityLayers
+          MapModule={MapModule}
+          cityBoundaries={cityBoundaries}
+          selectedLayers={selectedLayers}
+          layerTypeMap={layerTypeMap}
+          selectedCity={selectedCity}
+          geoJsonData={geoJsonData}
+          resultMetadata={resultMetadata}
+          reachableRoadsData={reachableRoadsData}
+          reachableHullData={reachableHullData}
+          highlightedIndex={highlightedIndex}
+          isValidGeoJSON={isValidGeoJSON}
           onFocusArea={handleFocusArea}
+          t={t}
         />
- 
-        {/* Render reachable roads and hulls */}
-        {/* {reachableRoadsData.map((roads, i) =>
-          isValidGeoJSON(roads) ? (
-            <GeoJSON
-              key={`roads-${i}`}
-              data={roads}
-              style={{
-                color: resultMetadata[i]?.color || '#413190',
-                weight: 0.5,
-                opacity: 0.8
-              }}
-            />
-          ) : null
-        )} */}
-        {reachableHullData.map((hull, i) =>
-          isValidGeoJSON(hull) ? (
-            <GeoJSON
-              key={`hull-${i}`}
-              data={hull}
-              style={{
-                color: resultMetadata[i]?.color || "#0072bd",
-                fillColor: resultMetadata[i]?.color || "#0072bd",
-                fillOpacity: 0.1,
-                weight: 2,
-                opacity: 1
-              }}
-            >
-              {/* Tooltip for result name */}
-              <Tooltip sticky direction="top" offset={[6, -6]}>
-                {resultMetadata[i]?.isDefault
-                  ? `${t("legend_base_area")} ${resultMetadata[i]?.groupIndex}`
-                  : `${t("legend_adjusted_area")} ${resultMetadata[i]?.groupIndex}.${resultMetadata[i]?.subIndex}`}
-              </Tooltip>
-
-            </GeoJSON>
-          ) : null
-        )}
-        {highlightedIndex !== null && reachableHullData[highlightedIndex] && (
-          <GeoJSON
-            key={`highlighted-${highlightedIndex}`}
-            data={reachableHullData[highlightedIndex]}
-            style={{
-              color: "#e63946",
-              fillColor: "#e63946",
-              weight: 3,
-              dashArray: "5",
-              fillOpacity: 0.7,
-              opacity: 1
-            }}
-            pane="highlight-pane"
-          />
-        )}
-        
-         
       </MapContainer>
     </section>
   );

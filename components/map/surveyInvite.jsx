@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "next-i18next";
-import sty from "./MapComponent.module.css";
+import sty from "../MapComponent.module.css";
 
 const SURVEY_URLS = {
   hamburg: "https://form.typeform.com/to/SjBF2goT",

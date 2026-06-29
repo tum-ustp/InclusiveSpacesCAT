@@ -141,6 +141,7 @@ const nWeights = Number.isFinite(nInt) && nInt > 0 ? nInt : 1; //number of weigh
     const geojson = result.rows[0].geojson;
     const timing = {
       nearestVertexMs: Number(nearestVertexMs.toFixed(2)),
+      routingQueryMs: Number(routingQueryMs.toFixed(2)),
       pgrDrivingDistanceMs: Number(routingQueryMs.toFixed(2)),
       apiTotalMs: Number(apiTotalMs.toFixed(2)),
     };
@@ -149,6 +150,7 @@ const nWeights = Number.isFinite(nInt) && nInt > 0 ? nInt : 1; //number of weigh
       "Server-Timing",
       [
         `nearest-vertex;dur=${timing.nearestVertexMs}`,
+        `routing-query;dur=${timing.routingQueryMs}`,
         `pgr-driving-distance;dur=${timing.pgrDrivingDistanceMs}`,
         `api-total;dur=${timing.apiTotalMs}`
       ].join(", ")
