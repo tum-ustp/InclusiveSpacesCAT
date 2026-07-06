@@ -89,7 +89,7 @@ export default function Profile({
         kerbsHigh: 0.1,
         facility: 0.5,
       },
-      walkingSpeed: 1.0,
+      walkingSpeed: 1.7,
     },
     {
       id: "visual_impairment",

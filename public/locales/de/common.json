@@ -13,6 +13,11 @@
   "aria_collapse_sidebar": "Seitenleiste einklappen",
   "aria_expand_sidebar": "Seitenleiste ausklappen",
   "alert_select_start_first": "Bitte wähle zuerst einen Startpunkt aus!",
+  "alert_screenshot_failed": "Der Screenshot konnte nicht gespeichert werden. Bitte versuchen Sie es erneut.",
+  "alert_screenshot_limited": "Der Screenshot-Export für Data-Information-Ebenen ist derzeit noch eingeschränkt. Der Screenshot wird ohne diese Ebenen exportiert.",
+  "download_screenshot": "Screenshot des Einzugsgebiets herunterladen",
+  "download_screenshot_preparing": "Screenshot wird vorbereitet...",
+  "sr_screenshot_saved": "Screenshot des Einzugsgebiets gespeichert.",
 
   "header_tool_instruction": "Werkzeuganleitung",
   "header_select_city": "Stadt auswählen",

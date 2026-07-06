@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react"; 
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import dynamic from "next/dynamic";
 import "leaflet/dist/leaflet.css"; 
 import proj4 from "proj4"; 
@@ -21,6 +21,17 @@ proj4.defs("EPSG:4326", "+proj=longlat +datum=WGS84 +no_defs");
 proj4.defs("EPSG:25832", "+proj=utm +zone=32 +ellps=WGS84 +datum=WGS84 +units=m +no_defs");
 
 const EXCLUDED_HAMBURG_FACILITY_POI = "poi_hh_haltstelle";
+
+const MapInstanceReporter = ({ useMap, onMapReady }) => {
+  const map = useMap();
+
+  useEffect(() => {
+    onMapReady?.(map);
+    return () => onMapReady?.(null);
+  }, [map, onMapReady]);
+
+  return null;
+};
  
 const MapComponent = ({ 
   cityCenter = [53.5503, 9.9920],
@@ -45,11 +56,24 @@ const MapComponent = ({
   setHighlightedIndex,
   isSearchZoom, 
   setIsSearchZoom,  
+  onScreenshotReady,
+  onScreenshotAvailabilityChange,
+  onSurveyOpenReady,
+  onSurveyAvailabilityChange,
 }) => {
   const [MapModule, setMapModule] = useState(null);
   const [customMarkerIcon, setCustomMarkerIcon] = useState(null);
   const [geoJsonData, setGeoJsonData] = useState({}); 
   const [cityBoundaries, setCityBoundaries] = useState({});
+  const mapInstanceRef = useRef(null);
+  const screenshotDataRef = useRef({
+    selectedCity: null,
+    reachableHullData: [],
+    resultMetadata: [],
+    highlightedIndex: null,
+    startPoint: null,
+    hasDataInformationLayers: false,
+  });
 
   const { t } = useTranslation("common");
 
@@ -94,6 +118,55 @@ const MapComponent = ({
     setGeoJsonData,
     t,
   });
+
+  useEffect(() => {
+    onScreenshotAvailabilityChange?.(reachableHullData.length > 0);
+  }, [reachableHullData.length, onScreenshotAvailabilityChange]);
+
+  screenshotDataRef.current = {
+    selectedCity,
+    reachableHullData,
+    resultMetadata,
+    highlightedIndex,
+    startPoint: startPoints.at(-1) || null,
+    hasDataInformationLayers: selectedLayers.length > 0,
+  };
+
+  const handleMapReady = useCallback((map) => {
+    mapInstanceRef.current = map;
+  }, []);
+
+  const handleScreenshotDownload = useCallback(async () => {
+    const mapElement = document.getElementById("map-region") || document.querySelector(`.${sty.leafletMap}`);
+    const { exportMapScreenshot } = await import("./map/exportMapScreenshot");
+    const {
+      selectedCity: screenshotCity,
+      reachableHullData: screenshotHullData,
+      resultMetadata: screenshotResultMetadata,
+      highlightedIndex: screenshotHighlightedIndex,
+      startPoint,
+      hasDataInformationLayers,
+    } = screenshotDataRef.current;
+
+    if (hasDataInformationLayers) {
+      window.alert(t("alert_screenshot_limited"));
+    }
+
+    await exportMapScreenshot({
+      mapElement,
+      map: mapInstanceRef.current,
+      city: screenshotCity,
+      reachableHullData: screenshotHullData,
+      resultMetadata: screenshotResultMetadata,
+      highlightedIndex: screenshotHighlightedIndex,
+      startPoint,
+    });
+  }, [t]);
+
+  useEffect(() => {
+    onScreenshotReady?.(handleScreenshotDownload);
+    return () => onScreenshotReady?.(null);
+  }, [handleScreenshotDownload, onScreenshotReady]);
 
   const {
     mousePosition,
@@ -293,7 +366,12 @@ const MapComponent = ({
         </div>
       )}
 
-      <SurveyInvite city={selectedCity} trigger={surveyInviteTrigger} />
+      <SurveyInvite
+        city={selectedCity}
+        trigger={surveyInviteTrigger}
+        onSurveyOpenReady={onSurveyOpenReady}
+        onSurveyAvailabilityChange={onSurveyAvailabilityChange}
+      />
 
       <p id="map-kbd-desc" className={sty.srOnly}>
         {t("sr_map_keyboard_instructions")}
@@ -307,6 +385,7 @@ const MapComponent = ({
         attributionControl={false}
       >
         <Pane name="highlight-pane" style={{ zIndex: 650 }} />
+        <MapInstanceReporter useMap={MapModule.useMap} onMapReady={handleMapReady} />
         <AutoZoomToStart
           startPoints={startPoints}
           isSearchZoom={isSearchZoom}
@@ -314,6 +393,7 @@ const MapComponent = ({
         />
         <MakeMapKeyboardAccessible />
         <TileLayer
+          crossOrigin="anonymous"
           //different base map
 
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/">CARTO</a>'

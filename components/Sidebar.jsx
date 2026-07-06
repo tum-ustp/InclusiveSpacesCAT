@@ -37,7 +37,10 @@ export default function Sidebar({
     isSearchZoom,
     setIsSearchZoom,
     city,
-    cityBoundaries
+    cityBoundaries,
+    onDownloadScreenshot,
+    canDownloadScreenshot,
+    isDownloadingScreenshot,
   }) {
     const { t } = useTranslation("common");
     const [srStatus, setSrStatus] = React.useState("");
@@ -112,8 +115,33 @@ export default function Sidebar({
             isSearchZoom={isSearchZoom}
             setIsSearchZoom={setIsSearchZoom}
           />
+
+          <button
+            type="button"
+            className={`${sty["setup-button"]} ${sty.kbdFocus}`}
+            disabled={!canDownloadScreenshot || isDownloadingScreenshot || !onDownloadScreenshot}
+            onClick={async () => {
+              if (!onDownloadScreenshot) return;
+              try {
+                await onDownloadScreenshot();
+                setSrStatus(t("sr_screenshot_saved"));
+              } catch (error) {
+                if (error?.name !== "AbortError") {
+                  console.error("Failed to save catchment area screenshot", error);
+                  alert(t("alert_screenshot_failed"));
+                }
+              }
+            }}
+            aria-label={t("download_screenshot")}
+            title={t("download_screenshot")}
+          >
+            <span>
+              {isDownloadingScreenshot
+                ? t("download_screenshot_preparing")
+                : t("download_screenshot")}
+            </span>
+          </button>
         </div>
       </div>
     );
   }
-  

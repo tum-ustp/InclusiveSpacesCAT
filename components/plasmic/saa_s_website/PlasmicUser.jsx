@@ -53,6 +53,11 @@ function PlasmicUser__RenderFunc(props) {
   const [highlightedIndex, setHighlightedIndex] = React.useState(null);
   const [cityCenter, setCityCenter] = React.useState([53.5503, 9.9920]); // hamburg as default
   const [isSearchZoom, setIsSearchZoom] = React.useState(false);
+  const [canDownloadScreenshot, setCanDownloadScreenshot] = React.useState(false);
+  const [isDownloadingScreenshot, setIsDownloadingScreenshot] = React.useState(false);
+  const [canOpenSurvey, setCanOpenSurvey] = React.useState(false);
+  const screenshotHandlerRef = React.useRef(null);
+  const surveyOpenHandlerRef = React.useRef(null);
  
   const [showHelp, setShowHelp] = React.useState(false);
 
@@ -158,6 +163,20 @@ function PlasmicUser__RenderFunc(props) {
     }));
   };
 
+  const handleDownloadScreenshot = React.useCallback(async () => {
+    if (!screenshotHandlerRef.current) return;
+    setIsDownloadingScreenshot(true);
+    try {
+      await screenshotHandlerRef.current();
+    } finally {
+      setIsDownloadingScreenshot(false);
+    }
+  }, []);
+
+  const handleOpenSurvey = React.useCallback(() => {
+    surveyOpenHandlerRef.current?.();
+  }, []);
+
   return (
     <React.Fragment>
       <Head></Head>
@@ -183,6 +202,8 @@ function PlasmicUser__RenderFunc(props) {
             showHelp={showHelp}
             setShowHelp={setShowHelp}
             variant="map"
+            canOpenSurvey={canOpenSurvey}
+            onOpenSurvey={handleOpenSurvey}
             data-plasmic-name="header"
             data-plasmic-override={overrides?.header}
             className={classNames("__wab_instance", sty.header)}
@@ -220,6 +241,9 @@ function PlasmicUser__RenderFunc(props) {
               setShowInfo={setShowInfo}
               isSearchZoom={isSearchZoom}
               setIsSearchZoom={setIsSearchZoom}
+              onDownloadScreenshot={handleDownloadScreenshot}
+              canDownloadScreenshot={canDownloadScreenshot}
+              isDownloadingScreenshot={isDownloadingScreenshot}
             />            
             <LayerTagBar
               selectedLayers={selectedLayers}
@@ -248,6 +272,14 @@ function PlasmicUser__RenderFunc(props) {
               setHighlightedIndex={setHighlightedIndex}
               isSearchZoom={isSearchZoom}
               setIsSearchZoom={setIsSearchZoom} 
+              onScreenshotReady={(handler) => {
+                screenshotHandlerRef.current = handler;
+              }}
+              onScreenshotAvailabilityChange={setCanDownloadScreenshot}
+              onSurveyOpenReady={(handler) => {
+                surveyOpenHandlerRef.current = handler;
+              }}
+              onSurveyAvailabilityChange={setCanOpenSurvey}
             />
           </div>
 

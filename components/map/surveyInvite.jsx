@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "next-i18next";
 import sty from "../MapComponent.module.css";
 
@@ -9,7 +9,12 @@ const SURVEY_URLS = {
 
 const SURVEY_INVITE_ENABLED = true;
 
-export default function SurveyInvite({ city, trigger }) {
+export default function SurveyInvite({
+  city,
+  trigger,
+  onSurveyAvailabilityChange,
+  onSurveyOpenReady,
+}) {
   const { t } = useTranslation("common");
   const [showSurveyPrompt, setShowSurveyPrompt] = useState(false);
   const surveyPromptShownRef = useRef(false);
@@ -22,14 +27,31 @@ export default function SurveyInvite({ city, trigger }) {
     setShowSurveyPrompt(false);
   };
 
+  const openSurveyPrompt = useCallback(() => {
+    if (!canShowSurveyPrompt) return;
+    setShowSurveyPrompt(true);
+  }, [canShowSurveyPrompt]);
+
+  useEffect(() => {
+    onSurveyOpenReady?.(openSurveyPrompt);
+    return () => onSurveyOpenReady?.(null);
+  }, [openSurveyPrompt, onSurveyOpenReady]);
+
+  useEffect(() => {
+    if (!canShowSurveyPrompt) {
+      onSurveyAvailabilityChange?.(false);
+    }
+  }, [canShowSurveyPrompt, onSurveyAvailabilityChange]);
+
   useEffect(() => {
     if (!trigger || surveyPromptShownRef.current || !canShowSurveyPrompt) {
       return;
     }
 
     surveyPromptShownRef.current = true;
+    onSurveyAvailabilityChange?.(true);
     setShowSurveyPrompt(true);
-  }, [trigger, canShowSurveyPrompt]);
+  }, [trigger, canShowSurveyPrompt, onSurveyAvailabilityChange]);
 
   useEffect(() => {
     if (!showSurveyPrompt) return;
@@ -97,18 +119,6 @@ export default function SurveyInvite({ city, trigger }) {
             </a>
           </div>
         </div>
-      )}
-
-      {!showSurveyPrompt && surveyPromptShownRef.current && (
-        <button
-          type="button"
-          className={sty.surveyReopenButton}
-          onClick={() => setShowSurveyPrompt(true)}
-          aria-haspopup="dialog"
-          aria-controls="survey-prompt-title"
-        >
-          {t("survey_prompt_reopen")}
-        </button>
       )}
     </>
   );

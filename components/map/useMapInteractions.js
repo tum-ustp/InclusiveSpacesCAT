@@ -20,13 +20,13 @@ export const useMapInteractions = ({
     };
 
     if (selectingStart) {
-      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener("mousemove", handleMouseMove);
     } else {
-      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener("mousemove", handleMouseMove);
     }
 
     return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener("mousemove", handleMouseMove);
     };
   }, [selectingStart]);
 
@@ -47,12 +47,11 @@ export const useMapInteractions = ({
       click: (e) => {
         if (selectingStart) {
           const [lon, lat] = [e.latlng.lng, e.latlng.lat];
-          console.log("Selected starting pointпјљ", [lon, lat]);
-          setStartPoints(prev => [...prev, [lon, lat]]);
+          console.log("Selected starting point:", [lon, lat]);
+          setStartPoints((prev) => [...prev, [lon, lat]]);
           setSelectingStart(false);
         }
-      }
-
+      },
     });
     return null;
   };

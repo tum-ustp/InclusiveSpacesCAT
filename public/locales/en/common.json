@@ -13,6 +13,11 @@
   "aria_collapse_sidebar": "Collapse sidebar",
   "aria_expand_sidebar": "Expand sidebar",
   "alert_select_start_first": "Please select a starting point first!",
+  "alert_screenshot_failed": "The screenshot could not be saved. Please try again.",
+  "alert_screenshot_limited": "Screenshot export for data information layers is limited so far. The screenshot will be exported without these layers.",
+  "download_screenshot": "Download catchment area screenshot",
+  "download_screenshot_preparing": "Preparing screenshot...",
+  "sr_screenshot_saved": "Catchment area screenshot saved.",
 
   "header_tool_instruction": "Tool Instruction",
   "header_select_city": "Select City",
