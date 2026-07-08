@@ -12,6 +12,26 @@ import {
 
 const EXCLUDED_HAMBURG_FACILITY_POI = "poi_hh_haltstelle";
 const ACCESSIBILITY_GEOMETRY_MODE = "simplified";
+const ACCESSIBILITY_FRONTIER_DEPTH_METERS = {
+  default: {
+    hamburg: 320,
+    penteli: 500,
+  },
+  weighted: {
+    hamburg: 260,
+    penteli: 420,
+  },
+};
+const ACCESSIBILITY_FRONTIER_INNER_STREET_PADDING = {
+  default: {
+    hamburg: 3,
+    penteli: 3,
+  },
+  weighted: {
+    hamburg: 3,
+    penteli: 3,
+  },
+};
 
 // check if the generated reachability area is valid GeoJSON
 export const isValidGeoJSON = (geojson) =>
@@ -152,6 +172,20 @@ export const useCatchmentArea = ({
       params.append("n", Math.max(1, selected.length));
       params.append("city", selectedCity);
       params.append("geometry", ACCESSIBILITY_GEOMETRY_MODE);
+      const frontierDepthByPhase =
+        ACCESSIBILITY_FRONTIER_DEPTH_METERS[phaseLabel] ||
+        ACCESSIBILITY_FRONTIER_DEPTH_METERS.weighted;
+      const frontierPaddingByPhase =
+        ACCESSIBILITY_FRONTIER_INNER_STREET_PADDING[phaseLabel] ||
+        ACCESSIBILITY_FRONTIER_INNER_STREET_PADDING.weighted;
+      params.append(
+        "frontierDepth",
+        frontierDepthByPhase[selectedCity] ?? frontierDepthByPhase.hamburg
+      );
+      params.append(
+        "frontierInnerStreetPadding",
+        frontierPaddingByPhase[selectedCity] ?? frontierPaddingByPhase.hamburg
+      );
 
       const runId = `${phaseLabel}-${Date.now()}`;
       const startMark = `accessibility-fetch-start-${runId}`;

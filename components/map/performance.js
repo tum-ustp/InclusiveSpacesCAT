@@ -46,14 +46,160 @@ export const countCoordinates = (geojson) => {
   return countGeometryCoordinates(geojson);
 };
 
+const stripInteriorRings = (feature) => {
+  if (feature?.geometry?.type === "Polygon") {
+    return turf.polygon([feature.geometry.coordinates[0]], feature.properties);
+  }
+
+  if (feature?.geometry?.type === "MultiPolygon") {
+    return turf.multiPolygon(
+      feature.geometry.coordinates.map((polygon) => [polygon[0]]),
+      feature.properties
+    );
+  }
+
+  return feature;
+};
+
+const isValidPosition = (position) =>
+  Array.isArray(position) &&
+  position.length >= 2 &&
+  Number.isFinite(position[0]) &&
+  Number.isFinite(position[1]);
+
+const cleanLineCoordinates = (coordinates) => {
+  if (!Array.isArray(coordinates)) return [];
+
+  const cleaned = [];
+  for (const position of coordinates) {
+    if (!isValidPosition(position)) continue;
+    const previous = cleaned[cleaned.length - 1];
+    if (previous && previous[0] === position[0] && previous[1] === position[1]) continue;
+    cleaned.push(position);
+  }
+
+  return cleaned.length >= 2 ? cleaned : [];
+};
+
+const normalizeRoadFeature = (feature) => {
+  const geometry = feature?.geometry;
+  const properties = feature?.properties;
+
+  if (geometry?.type === "LineString") {
+    const coordinates = cleanLineCoordinates(geometry.coordinates);
+    return coordinates.length >= 2 ? turf.lineString(coordinates, properties) : null;
+  }
+
+  if (geometry?.type === "MultiLineString") {
+    const lines = geometry.coordinates
+      .map(cleanLineCoordinates)
+      .filter((coordinates) => coordinates.length >= 2);
+
+    if (lines.length === 0) return null;
+    return lines.length === 1
+      ? turf.lineString(lines[0], properties)
+      : turf.multiLineString(lines, properties);
+  }
+
+  return null;
+};
+
+const normalizeRoadFeatures = (roads) =>
+  Array.isArray(roads) ? roads.map(normalizeRoadFeature).filter(Boolean) : [];
+
+const getFeatures = (geojson) => {
+  if (geojson?.type === "FeatureCollection") return geojson.features || [];
+  if (geojson?.type === "Feature") return [geojson];
+  return [];
+};
+
+const isPolygonFeature = (feature) =>
+  feature?.geometry?.type === "Polygon" ||
+  feature?.geometry?.type === "MultiPolygon";
+
+const flattenPolygonFeatures = (features) =>
+  turf.flatten(turf.featureCollection(features.filter(isPolygonFeature))).features
+    .filter(isPolygonFeature);
+
+const unionPolygonFeatures = (features) => {
+  const flattened = flattenPolygonFeatures(features);
+
+  if (flattened.length === 0) return null;
+  if (flattened.length === 1) return flattened[0];
+
+  return turf.union(turf.featureCollection(flattened));
+};
+
+const polygonBoundaryLines = (feature) => {
+  const boundary = turf.polygonToLine(feature);
+
+  if (boundary?.type === "FeatureCollection") return boundary.features;
+  return boundary ? [boundary] : [];
+};
+
+const fillClosedFacesFromBufferBoundaries = (features) => {
+  const polygonParts = flattenPolygonFeatures(features);
+
+  if (polygonParts.length === 0) return [];
+
+  try {
+    const boundaryLines = polygonParts.flatMap(polygonBoundaryLines);
+    const faces = turf.polygonize(turf.featureCollection(boundaryLines));
+    const filled = unionPolygonFeatures([...polygonParts, ...faces.features]);
+
+    return filled ? [stripInteriorRings(filled)] : polygonParts.map(stripInteriorRings);
+  } catch (err) {
+    console.warn("Failed to fill closed buffered faces:", err);
+    return polygonParts.map(stripInteriorRings);
+  }
+};
+
+const buildSolidBufferedFeatures = (buffered) => {
+  const polygonFeatures = getFeatures(buffered).filter(isPolygonFeature);
+
+  if (polygonFeatures.length === 0) return [];
+
+  try {
+    return fillClosedFacesFromBufferBoundaries(polygonFeatures);
+  } catch (err) {
+    console.warn("Failed to merge buffered reachability geometry:", err);
+    return polygonFeatures.map(stripInteriorRings);
+  }
+};
+
+const calculateAreaSquareMeters = (features) => {
+  if (features.length === 0) return 0;
+
+  return features.reduce((sum, feature) => sum + turf.area(feature), 0);
+};
+
 export const buildBufferedAreaWithTiming = (roads, bufferDistance, contourSettings, phaseLabel) => {
   const runId = `${phaseLabel}-${Date.now()}`;
+  const roadFeatures = normalizeRoadFeatures(roads);
+
+  if (roadFeatures.length === 0) {
+    return {
+      cleaned: {
+        type: "FeatureCollection",
+        features: [],
+      },
+      areaHectares: 0,
+      timings: {
+        combineMs: 0,
+        simplifyMs: 0,
+        bufferMs: 0,
+        areaMs: 0,
+        turfProcessingMs: 0,
+      },
+    };
+  }
 
   const combineStart = `accessibility-combine-start-${runId}`;
   const combineEnd = `accessibility-combine-end-${runId}`;
   markPerformance(combineStart);
-  const fc = turf.featureCollection(roads);
-  const combined = turf.combine(fc);
+  const combined = roadFeatures.length === 1
+    ? roadFeatures[0]
+    : turf.combine(turf.featureCollection(roadFeatures));
   markPerformance(combineEnd);
   const combineMs = measurePerformance(
     `accessibility:turf:combine:${phaseLabel}`,
@@ -64,10 +210,17 @@ export const buildBufferedAreaWithTiming = (roads, bufferDistance, contourSettin
   const simplifyStart = `accessibility-simplify-start-${runId}`;
   const simplifyEnd = `accessibility-simplify-end-${runId}`;
   markPerformance(simplifyStart);
-  const simplified = turf.simplify(combined, {
-    tolerance: contourSettings.tolerance,
-    highQuality: contourSettings.highQuality
-  });
+  let simplified = combined;
+  if (roadFeatures.length > 1) {
+    try {
+      simplified = turf.simplify(combined, {
+        tolerance: contourSettings.tolerance,
+        highQuality: contourSettings.highQuality
+      });
+    } catch (err) {
+      console.warn("Failed to simplify reachability roads; buffering cleaned lines instead:", err);
+    }
+  }
   markPerformance(simplifyEnd);
   const simplifyMs = measurePerformance(
     `accessibility:turf:simplify:${phaseLabel}`,
@@ -94,21 +247,10 @@ export const buildBufferedAreaWithTiming = (roads, bufferDistance, contourSettin
   markPerformance(areaStart);
   const cleaned = {
     type: "FeatureCollection",
-    features: buffered.features.map((f) => {
-      if (f.geometry.type === "Polygon") {
-        return turf.polygon([f.geometry.coordinates[0]]);
-      }
-      if (f.geometry.type === "MultiPolygon") {
-        return turf.multiPolygon(f.geometry.coordinates.map((p) => [p[0]]));
-      }
-      return f;
-    })
+    features: buildSolidBufferedFeatures(buffered)
   };
 
-  let areaSquareMeters = 0;
-  cleaned.features.forEach((feature) => {
-    areaSquareMeters += turf.area(feature);
-  });
+  const areaSquareMeters = calculateAreaSquareMeters(cleaned.features);
   markPerformance(areaEnd);
   const areaMs = measurePerformance(
     `accessibility:turf:area:${phaseLabel}`,
@@ -155,6 +297,8 @@ export const logAccessibilityTiming = (phaseLabel, requestTiming, turfTiming, in
   console.groupCollapsed(`[accessibility timing] ${phaseLabel}`);
   console.table({
     geometryMode: serverTiming.geometryMode || "full",
+    frontierDepthMeters: Number(serverTiming.frontierDepthMeters || 0),
+    frontierInnerStreetPadding: Number(serverTiming.frontierInnerStreetPadding || 0),
     routingQueryMs,
     apiOverheadMs,
     nearestVertexMs,
@@ -180,10 +324,10 @@ export const logAccessibilityTiming = (phaseLabel, requestTiming, turfTiming, in
 
 export const getContourSettings = (featureCount) => {
   if (featureCount > 4000) {
-    return { tolerance: 0.00014, highQuality: false, steps: 12 };
+    return { tolerance: 0.00018, highQuality: false, steps: 8 };
   }
   if (featureCount > 1500) {
-    return { tolerance: 0.0001, highQuality: false, steps: 14 };
+    return { tolerance: 0.00014, highQuality: false, steps: 8 };
   }
-  return { tolerance: 0.00007, highQuality: true, steps: 16 };
+  return { tolerance: 0.0001, highQuality: false, steps: 10 };
 };
