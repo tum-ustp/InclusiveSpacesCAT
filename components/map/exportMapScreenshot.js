@@ -1,6 +1,5 @@
-const SVG_NAMESPACE = "http://www.w3.org/2000/svg";
-const XHTML_NAMESPACE = "http://www.w3.org/1999/xhtml";
 const EXPORT_PIXEL_RATIO = 150 / 72;
+const LEGEND_FALLBACK_WIDTH = 300;
 
 const getExportScale = () => {
   const deviceScale = window.devicePixelRatio || 1;
@@ -40,89 +39,6 @@ const canvasToBlob = (canvas) =>
     }, "image/png");
   });
 
-const copyComputedStyles = (sourceNode, targetNode) => {
-  if (!(sourceNode instanceof Element) || !(targetNode instanceof Element)) return;
-
-  const computed = window.getComputedStyle(sourceNode);
-  for (const property of Array.from(computed)) {
-    targetNode.style.setProperty(
-      property,
-      computed.getPropertyValue(property),
-      computed.getPropertyPriority(property)
-    );
-  }
-};
-
-const cloneWithStyles = (sourceNode) => {
-  const clone = sourceNode.cloneNode(false);
-  copyComputedStyles(sourceNode, clone);
-
-  for (const child of Array.from(sourceNode.childNodes)) {
-    if (child.nodeType === Node.TEXT_NODE) {
-      clone.appendChild(child.cloneNode(true));
-      continue;
-    }
-
-    if (child.nodeType !== Node.ELEMENT_NODE) continue;
-    clone.appendChild(cloneWithStyles(child));
-  }
-
-  return clone;
-};
-
-const renderElementToCanvas = async (element) => {
-  const rect = element.getBoundingClientRect();
-  const width = Math.round(rect.width);
-  const height = Math.round(rect.height);
-  const scale = getExportScale();
-
-  const canvas = document.createElement("canvas");
-  canvas.width = width * scale;
-  canvas.height = height * scale;
-
-  const ctx = canvas.getContext("2d");
-  if (!ctx) {
-    throw new Error("Canvas context is unavailable");
-  }
-
-  ctx.scale(scale, scale);
-
-  const clone = cloneWithStyles(element);
-  clone.setAttribute("xmlns", XHTML_NAMESPACE);
-  clone.style.width = `${width}px`;
-  clone.style.height = `${height}px`;
-  clone.style.boxSizing = "border-box";
-
-  const wrapper = document.createElementNS(SVG_NAMESPACE, "svg");
-  wrapper.setAttribute("xmlns", SVG_NAMESPACE);
-  wrapper.setAttribute("width", `${width}`);
-  wrapper.setAttribute("height", `${height}`);
-  const sourceViewBox =
-    element instanceof SVGSVGElement ? element.getAttribute("viewBox") : null;
-  wrapper.setAttribute("viewBox", sourceViewBox || `0 0 ${width} ${height}`);
-
-  const foreignObject = document.createElementNS(SVG_NAMESPACE, "foreignObject");
-  foreignObject.setAttribute("x", "0");
-  foreignObject.setAttribute("y", "0");
-  foreignObject.setAttribute("width", "100%");
-  foreignObject.setAttribute("height", "100%");
-  foreignObject.appendChild(clone);
-  wrapper.appendChild(foreignObject);
-
-  const serialized = new XMLSerializer().serializeToString(wrapper);
-  const dataUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(serialized)}`;
-
-  const image = await new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => resolve(img);
-    img.onerror = reject;
-    img.src = dataUrl;
-  });
-
-  ctx.drawImage(image, 0, 0, width, height);
-  return { canvas, rect };
-};
-
 const hideDuringExport = (selectors) => {
   const nodes = Array.from(document.querySelectorAll(selectors.join(",")));
   const previous = nodes.map((node) => ({
@@ -147,24 +63,282 @@ const hideDuringExport = (selectors) => {
   };
 };
 
-const renderLegend = async (canvas, rootElement, baseRect) => {
-  const legend = rootElement.querySelector("#legend");
+const ensureLegendFullyExpandedForExport = async (legend) => {
+  const clickedButtons = [];
+
+  const clickIfCollapsed = (button) => {
+    if (button?.getAttribute("aria-expanded") !== "false") return;
+    button.click();
+    clickedButtons.push(button);
+  };
+
+  clickIfCollapsed(legend.querySelector("#legend-heading"));
+  await waitForPaint();
+
+  for (const toggle of Array.from(legend.querySelectorAll('button[aria-controls][aria-expanded="false"]'))) {
+    clickIfCollapsed(toggle);
+  }
+
+  await waitForPaint();
+
+  return () => {
+    for (const button of clickedButtons.reverse()) {
+      button.click();
+    }
+  };
+};
+
+const normalizeText = (text) => (text || "").replace(/\s+/g, " ").trim();
+
+const wrapText = (ctx, text, maxWidth) => {
+  const words = normalizeText(text).split(" ").filter(Boolean);
+  const lines = [];
+  let line = "";
+
+  for (const word of words) {
+    const nextLine = line ? `${line} ${word}` : word;
+    if (ctx.measureText(nextLine).width <= maxWidth) {
+      line = nextLine;
+      continue;
+    }
+
+    if (line) lines.push(line);
+    line = word;
+  }
+
+  if (line) lines.push(line);
+  return lines.length ? lines : [""];
+};
+
+const normalizeToggleLabel = (text) => normalizeText(text).replace(/^\S+\s+/, "").replace(/\s*:\s*$/, "");
+
+const isNoneLine = (text) => /^none$/i.test(normalizeText(text));
+
+const getPanelLines = (panel) => {
+  if (!panel) return [];
+
+  return Array.from(panel.children)
+    .flatMap((child) => {
+      if (child.tagName === "UL") {
+        return Array.from(child.querySelectorAll("li")).map((item) => normalizeText(item.textContent));
+      }
+
+      return [normalizeText(child.textContent)];
+    })
+    .filter(Boolean);
+};
+
+const getLegendEntries = (legend, resultMetadata) => {
+  const sections = Array.from(legend.querySelectorAll('[class*="legend-section"]'));
+  if (!sections.length) {
+    return resultMetadata.map((entry, index) => ({
+      color: entry?.color || "#0072bd",
+      title: entry?.isDefault
+        ? `Standard Walking Area ${entry?.groupIndex ?? index + 1}`
+        : `Comfort-Adjusted Walking Area ${entry?.groupIndex ?? ""}.${entry?.subIndex ?? ""}`,
+      lines: [
+        `Time: ${entry?.time ?? ""} minutes`,
+        `Speed: ${entry?.speed ?? ""} km/h`,
+        `Area: ${entry?.area ?? ""} ha`,
+        ...(!entry?.isDefault && entry?.weightedRatio ? [`Comfort Area Ratio: ${entry.weightedRatio}`] : []),
+      ],
+    }));
+  }
+
+  return sections.map((section, index) => {
+    const colorNode = section.querySelector('[role="presentation"]');
+    const titleNode = section.querySelector('[class*="legend-title"] button');
+    const detailButtons = Array.from(section.querySelectorAll('button[aria-controls]')).filter(
+      (button) => button.id !== "legend-heading"
+    );
+    const controlledPanelIds = new Set(
+      detailButtons.map((button) => button.getAttribute("aria-controls")).filter(Boolean)
+    );
+    const color =
+      colorNode?.style?.backgroundColor ||
+      (colorNode ? window.getComputedStyle(colorNode).backgroundColor : null) ||
+      resultMetadata[index]?.color ||
+      "#0072bd";
+    const directDetailLines = Array.from(section.children)
+      .filter(
+        (child) =>
+          child.tagName === "DIV" &&
+          !child.hidden &&
+          !child.querySelector("button") &&
+          !controlledPanelIds.has(child.id)
+      )
+      .map((child) => normalizeText(child.textContent))
+      .filter(Boolean);
+    const expandedDetailLines = detailButtons.flatMap((button) => {
+        const panel = document.getElementById(button.getAttribute("aria-controls"));
+        const panelLines = getPanelLines(panel);
+        const label = normalizeToggleLabel(button.textContent);
+
+        if (panelLines.length === 1 && isNoneLine(panelLines[0])) {
+          return label ? [`${label}: None`] : ["None"];
+        }
+
+        return [label, ...panelLines].filter(Boolean);
+      });
+
+    return {
+      color,
+      title: normalizeText(titleNode?.textContent) || `Area ${index + 1}`,
+      lines: [...directDetailLines, ...expandedDetailLines],
+    };
+  });
+};
+
+const getLegendTitle = (legend) => {
+  const titleNode = legend.querySelector("#legend-heading span");
+  return normalizeText(titleNode?.textContent) || "Catchment Area Results";
+};
+
+const drawRoundedRect = (ctx, x, y, width, height, radius) => {
+  if (typeof ctx.roundRect === "function") {
+    ctx.roundRect(x, y, width, height, radius);
+    return;
+  }
+
+  const safeRadius = Math.min(radius, width / 2, height / 2);
+  ctx.moveTo(x + safeRadius, y);
+  ctx.lineTo(x + width - safeRadius, y);
+  ctx.quadraticCurveTo(x + width, y, x + width, y + safeRadius);
+  ctx.lineTo(x + width, y + height - safeRadius);
+  ctx.quadraticCurveTo(x + width, y + height, x + width - safeRadius, y + height);
+  ctx.lineTo(x + safeRadius, y + height);
+  ctx.quadraticCurveTo(x, y + height, x, y + height - safeRadius);
+  ctx.lineTo(x, y + safeRadius);
+  ctx.quadraticCurveTo(x, y, x + safeRadius, y);
+};
+
+const renderLegendPanel = ({ canvas, baseRect, legend, resultMetadata }) => {
+  if (!resultMetadata.length) return;
+
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return;
+
+  const padding = 14;
+  const headerHeight = 36;
+  const sectionGap = 10;
+  const lineHeight = 18;
+  const width = Math.min(
+    Math.max(Math.round(legend.getBoundingClientRect().width || 0), LEGEND_FALLBACK_WIDTH),
+    Math.max(LEGEND_FALLBACK_WIDTH, baseRect.width - 24)
+  );
+  const contentWidth = width - padding * 2;
+  const title = getLegendTitle(legend);
+  const entries = getLegendEntries(legend, resultMetadata);
+
+  ctx.save();
+  ctx.font = "14px sans-serif";
+
+  const measuredSections = entries.map((entry) => {
+    ctx.font = "700 14px sans-serif";
+    const titleLines = wrapText(ctx, entry.title, contentWidth - 20);
+    ctx.font = "14px sans-serif";
+    const detailLines = entry.lines.flatMap((line) => wrapText(ctx, line, contentWidth));
+
+    return {
+      ...entry,
+      titleLines,
+      detailLines,
+      height: 12 + titleLines.length * lineHeight + 4 + detailLines.length * lineHeight + sectionGap,
+    };
+  });
+
+  const height = Math.min(
+    headerHeight + padding * 2 + measuredSections.reduce((sum, section) => sum + section.height, 0),
+    baseRect.height - 24
+  );
+  const legendRect = legend.getBoundingClientRect();
+  const hasVisibleLegendPosition = legendRect.width > 0 && legendRect.height > 0;
+  const x = hasVisibleLegendPosition
+    ? Math.min(Math.max(Math.round(legendRect.left - baseRect.left), 12), baseRect.width - width - 12)
+    : baseRect.width - width - 12;
+  const y = hasVisibleLegendPosition
+    ? Math.min(Math.max(Math.round(legendRect.top - baseRect.top), 12), baseRect.height - height - 12)
+    : baseRect.height - height - 60;
+
+  ctx.fillStyle = "#f5f5f5";
+  ctx.strokeStyle = "#cccccc";
+  ctx.lineWidth = 2;
+  ctx.shadowColor = "rgba(0, 0, 0, 0.25)";
+  ctx.shadowBlur = 8;
+  ctx.shadowOffsetY = 2;
+  ctx.beginPath();
+  drawRoundedRect(ctx, x, y, width, height, 6);
+  ctx.fill();
+  ctx.shadowColor = "transparent";
+  ctx.stroke();
+
+  ctx.fillStyle = "rgba(131, 107, 251, 0.79)";
+  ctx.beginPath();
+  drawRoundedRect(ctx, x, y, width, headerHeight, 6);
+  ctx.fill();
+
+  ctx.fillStyle = "#111111";
+  ctx.font = "700 15px sans-serif";
+  ctx.fillText(title, x + padding, y + 23);
+
+  let cursorY = y + headerHeight + padding;
+  ctx.beginPath();
+  ctx.rect(x, y, width, height);
+  ctx.clip();
+
+  for (const section of measuredSections) {
+    if (cursorY > y + height - padding) break;
+
+    ctx.fillStyle = section.color;
+    ctx.beginPath();
+    ctx.arc(x + padding + 6, cursorY + 7, 6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "#cccccc";
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    ctx.fillStyle = "#111111";
+    ctx.font = "700 14px sans-serif";
+    let titleY = cursorY + 12;
+    for (const line of section.titleLines) {
+      ctx.fillText(line, x + padding + 20, titleY);
+      titleY += lineHeight;
+    }
+
+    ctx.font = "14px sans-serif";
+    ctx.fillStyle = "#111111";
+    let detailY = titleY + 4;
+    for (const line of section.detailLines) {
+      if (detailY > y + height - padding) break;
+      ctx.fillText(line, x + padding, detailY);
+      detailY += lineHeight;
+    }
+
+    cursorY = detailY + sectionGap;
+    ctx.strokeStyle = "#413190";
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.moveTo(x + padding, cursorY - 5);
+    ctx.lineTo(x + width - padding, cursorY - 5);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  ctx.restore();
+};
+
+const renderLegend = async (canvas, rootElement, baseRect, resultMetadata) => {
+  const legend = rootElement.querySelector("#legend") || document.getElementById("legend");
   if (!legend) return;
 
-  try {
-    const { canvas: legendCanvas, rect: legendRect } = await renderElementToCanvas(legend);
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+  const restoreLegend = await ensureLegendFullyExpandedForExport(legend);
 
-    ctx.drawImage(
-      legendCanvas,
-      Math.round(legendRect.left - baseRect.left),
-      Math.round(legendRect.top - baseRect.top),
-      legendRect.width,
-      legendRect.height
-    );
+  try {
+    renderLegendPanel({ canvas, baseRect, legend, resultMetadata });
   } catch (err) {
     console.warn("Legend rendering skipped during screenshot export", err);
+  } finally {
+    restoreLegend();
   }
 };
 
@@ -301,7 +475,7 @@ const exportMapLayer = async ({
     );
   }
 
-  await renderLegend(canvas, mapViewport, rect);
+  await renderLegend(canvas, mapViewport, rect, resultMetadata);
 
   const blob = await canvasToBlob(canvas);
   await saveBlob({ blob, city });
