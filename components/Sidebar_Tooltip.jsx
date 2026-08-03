@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { useTranslation } from "next-i18next";
 import sty from "./Sidebar.module.css";
 
-export default function Sidebar_Tooltip({ show, type, anchorRef, onClose, id }) {
+export default function Sidebar_Tooltip({ show, type, city, anchorRef, onClose, id }) {
   const { t } = useTranslation("common");
   const [pos, setPos] = React.useState(null);
   const [positioned, setPositioned] = React.useState(false);
@@ -178,7 +178,7 @@ export default function Sidebar_Tooltip({ show, type, anchorRef, onClose, id }) 
       className={sty["tooltip-container"]}
       style={tooltipStyle}
     >
-      {contentFor(type, t)}
+      {contentFor(type, t, city)}
     </div>
   );
 
@@ -186,7 +186,20 @@ export default function Sidebar_Tooltip({ show, type, anchorRef, onClose, id }) 
 
 }
 
-function contentFor(type, t) {
+function contentFor(type, t, city) {
+  const munichMockupNotice =
+    city === "munich" ? (
+      <p className={sty["tooltip-text"]}>
+        {t("tooltip_munich_mockup_data")}
+      </p>
+    ) : null;
+  const featureTooltip = (key) => (
+    <div className={sty["tooltip-content"]}>
+      <p className={sty["tooltip-text"]}>{t(key)}</p>
+      {munichMockupNotice}
+    </div>
+  );
+
   if (!type) {
     return (
       <div className={sty["tooltip-content"]}>
@@ -267,30 +280,31 @@ function contentFor(type, t) {
         <p className={sty["tooltip-text"]}>
           {t("tooltip_variable_title")}
         </p>
+        {munichMockupNotice}
       </div>
     );
   }
-  if (type === "noise") return <p className={sty["tooltip-text"]}>{t('tooltip_noise')}</p>;
-  if (type === "light") return <p className={sty["tooltip-text"]}>{t('tooltip_light')}</p>;
-  if (type === "tree") return <p className={sty["tooltip-text"]}>{t('tooltip_tree')}</p>;
-  if (type === "trafficLight") return <p className={sty["tooltip-text"]}>{t('tooltip_traffic')}</p>;
-  if (type === "tactile_pavement") return <p className={sty["tooltip-text"]}>{t('tooltip_tactile')}</p>;
-  if (type === "temperatureSummer") return <p className={sty["tooltip-text"]}>{t('tooltip_summer')}</p>;
-  if (type === "temperatureWinter") return <p className={sty["tooltip-text"]}>{t('tooltip_winter')}</p>;
-  if (type === "stair") return <p className={sty["tooltip-text"]}>{t('tooltip_stair')}</p>;
-  if (type === "obstacle") return <p className={sty["tooltip-text"]}>{t('tooltip_obstacle')}</p>;
-  if (type === "unevenSurface") return <p className={sty["tooltip-text"]}>{t('tooltip_uneven')}</p>;
-  if (type === "poorPavement") return <p className={sty["tooltip-text"]}>{t('tooltip_poor')}</p>;
-  if (type === "kerbsHigh") return <p className={sty["tooltip-text"]}>{t('tooltip_kerb')}</p>;
-  if (type === "facility") return <p className={sty["tooltip-text"]}>{t('tooltip_facility')}</p>;
-  if (type === "pedestrianFlow") return <p className={sty["tooltip-text"]}>{t('tooltip_crowd')}</p>;
-  if (type === "greeninf") return <p className={sty["tooltip-text"]}>{t('tooltip_green')}</p>;
-  if (type === "blueinf") return <p className={sty["tooltip-text"]}>{t('tooltip_blue')}</p>;
-  if (type === "station") return <p className={sty["tooltip-text"]}>{t('tooltip_station')}</p>;
-  if (type === "narrowRoads") return <p className={sty["tooltip-text"]}>{t('tooltip_narrow')}</p>;
-  if (type === "wcDisabled") return <p className={sty["tooltip-text"]}>{t('tooltip_wc')}</p>;
-  if (type === "slope") return <p className={sty["tooltip-text"]}>{t('tooltip_slope')}</p>;
-  if (type === "slope_penteli") return <p className={sty["tooltip-text"]}>{t('tooltip_slope')}</p>;
+  if (type === "noise") return featureTooltip("tooltip_noise");
+  if (type === "light") return featureTooltip("tooltip_light");
+  if (type === "tree") return featureTooltip("tooltip_tree");
+  if (type === "trafficLight") return featureTooltip("tooltip_traffic");
+  if (type === "tactile_pavement") return featureTooltip("tooltip_tactile");
+  if (type === "temperatureSummer") return featureTooltip("tooltip_summer");
+  if (type === "temperatureWinter") return featureTooltip("tooltip_winter");
+  if (type === "stair") return featureTooltip("tooltip_stair");
+  if (type === "obstacle") return featureTooltip("tooltip_obstacle");
+  if (type === "unevenSurface") return featureTooltip("tooltip_uneven");
+  if (type === "poorPavement") return featureTooltip("tooltip_poor");
+  if (type === "kerbsHigh") return featureTooltip("tooltip_kerb");
+  if (type === "facility") return featureTooltip("tooltip_facility");
+  if (type === "pedestrianFlow") return featureTooltip("tooltip_crowd");
+  if (type === "greeninf") return featureTooltip("tooltip_green");
+  if (type === "blueinf") return featureTooltip("tooltip_blue");
+  if (type === "station") return featureTooltip("tooltip_station");
+  if (type === "narrowRoads") return featureTooltip("tooltip_narrow");
+  if (type === "wcDisabled") return featureTooltip("tooltip_wc");
+  if (type === "slope") return featureTooltip("tooltip_slope");
+  if (type === "slope_penteli") return featureTooltip("tooltip_slope");
   if (type === "walkingSpeed")
     return (
       <div className={sty["tooltip-content"]}>

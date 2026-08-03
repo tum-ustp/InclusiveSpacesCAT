@@ -4,7 +4,135 @@ import Tooltip from "./Sidebar_Tooltip";
 import { useTranslation } from 'next-i18next';
 import { cityLayerConfig } from "./cityVariableConfig";
 
+function FeatureCheckbox({
+  city,
+  layer,
+  label,
+  enabled,
+  value,
+  weightLevels,
+  weightLabels,
+  weightTexts,
+  toggleVariable,
+  handleInputChange,
+  setLiveMessage,
+  t,
+}) {
+  const sliderIndex = weightLevels.indexOf(value);
+  const [showTooltip, setShowTooltip] = React.useState(false);
+  const tooltipRef = React.useRef();
+  const sliderId = `var-${layer}-slider`;
+
+  return (
+    <div className={sty["checkbox-container"]}>
+      <div className={sty["checkbox-top-row"]}>
+        <label className={sty["checkbox-label"]}>
+          <input
+            type="checkbox"
+            className={sty.kbdFocus}
+            onChange={() => {
+              toggleVariable(layer);
+              setLiveMessage(
+                !enabled
+                  ? `${label} ${t('aria_enabled')}`
+                  : `${label} ${t('aria_disabled')}`
+              );
+              if (!enabled) {
+                const fakeEvent = {
+                  target: { value: weightLevels[2] }
+                };
+                handleInputChange(fakeEvent, layer);
+              }
+            }}
+            checked={enabled}
+          />
+          <span className={sty["sidebar-text"]}>{label}</span>
+        </label>
+        <button
+          type="button"
+          className={`${sty["info-icon"]} ${sty.kbdFocus}`}
+          ref={tooltipRef}
+          onClick={(e) => { e.stopPropagation(); setShowTooltip(prev => !prev); }}
+          aria-label={t("aria_feature_info_button", { feature: label })}
+          title={t("aria_feature_info_button", { feature: label })}
+          aria-haspopup="dialog"
+          aria-expanded={showTooltip}
+          aria-controls={showTooltip ? `tip-${layer}` : undefined}
+        >
+          <img src="/images/icon_info.png" alt="" aria-hidden="true" className={sty.infoIconImg} />
+        </button>
+      </div>
+
+      <Tooltip
+        show={showTooltip}
+        type={layer}
+        city={city}
+        anchorRef={tooltipRef}
+        onClose={() => setShowTooltip(false)}
+        id={`tip-${layer}`}
+      />
+
+      <div className={sty["slider-container"]}>
+        <label htmlFor={sliderId} className={sty["srOnly"]}>{t('variable_weight_for', { label })}</label>
+        <input
+          id={sliderId}
+          type="range"
+          min="0"
+          max="3"
+          step="1"
+          disabled={!enabled}
+          value={sliderIndex >= 0 ? sliderIndex : 3}
+          className={`${sty.kbdFocus} ${!enabled ? sty["disabled"] : ""}`}
+          aria-label={t('variable_weight_for' , { label })}
+          aria-valuemin={0}
+          aria-valuemax={3}
+          aria-valuenow={sliderIndex >= 0 ? sliderIndex : 3}
+          aria-valuetext={
+            sliderIndex >= 0 ? weightLabels[sliderIndex] : t('emoji_level_unknown')
+          }
+          style={{
+            background: enabled
+              ? (() => {
+                  const pct = ((sliderIndex + 0.5) / 4) * 100;
+                  const pctGray = ((sliderIndex + 0.8) / 4) * 100;
+                  return `
+                    linear-gradient(to right,
+                      transparent 0%,
+                      transparent ${pct}%,
+                      #9ca3af ${pctGray}%,
+                      #9ca3af 100%
+                    ),
+                    linear-gradient(to right,
+                      #e6ea08ff 0%,
+                      #dc2626 100%
+                    )
+                  `;
+                })()
+              : undefined
+          }}
+          onChange={(event) => {
+            const index = parseInt(event.target.value, 10);
+            const fakeEvent = {
+              target: {
+                value: weightLevels[index],
+              },
+            };
+            handleInputChange(fakeEvent, layer);
+          }}
+        />
+        <span className={sty["slider-value"]} aria-hidden="true">
+          {sliderIndex >= 0 ? weightLabels[sliderIndex] : "-"}
+        </span>
+        <span className={sty["srOnly"]}>
+          {sliderIndex >= 0 ? weightTexts[sliderIndex] : t('emoji_level_unknown')}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 export default function VariableControls({
+  city = "hamburg",
   enabledVariables,
   toggleVariable,
   layerValues,
@@ -20,7 +148,6 @@ export default function VariableControls({
 }) {
   const [liveMessage, setLiveMessage] = React.useState("");
 
-  const city = (typeof window !== "undefined" && (localStorage.getItem("selectedCity") || "hamburg")) || "hamburg";
   const availableFeatures = cityLayerConfig[city]?.discomfortFeatures || [];
 
   const { t } = useTranslation("common");
@@ -32,123 +159,55 @@ export default function VariableControls({
     t("emoji_level_2"), // 0.5  → Moderately disturbing
     t("emoji_level_1"), // 0.1  → Totally Unbearable
   ];
-  const renderCheckbox = (layer, label) => {
-    const enabled = enabledVariables.includes(layer);
-    const value = layerValues[layer];
-    const sliderIndex = weightLevels.indexOf(value);
-    const [showTooltip, setShowTooltip] = React.useState(false);
-    const tooltipRef = React.useRef();
-    const sliderId = `var-${layer}-slider`;
-
-    return (
-      <div className={sty["checkbox-container"]}>
-        <div className={sty["checkbox-top-row"]}>
-          <label className={sty["checkbox-label"]}>
-            <input
-              type="checkbox"
-              className={sty.kbdFocus}
-              onChange={() => {
-                toggleVariable(layer);
-                setLiveMessage(
-                  !enabled
-                    ? `${label} ${t('aria_enabled')}`
-                    : `${label} ${t('aria_disabled')}`
-                );
-                if (!enabled) {
-                  const fakeEvent = {
-                    target: { value: weightLevels[2] } 
-                  };
-                  handleInputChange(fakeEvent, layer);
-                }
-              }}
-              checked={enabled}
-            />
-            <span className={sty["sidebar-text"]}>{label}</span>
-          </label>
-          <button
-            type="button"
-            className={`${sty["info-icon"]} ${sty.kbdFocus}`}
-            ref={tooltipRef}
-            onClick={(e) => { e.stopPropagation(); setShowTooltip(prev => !prev); }}
-            aria-label={t("aria_feature_info_button", { feature: label })}
-            title={t("aria_feature_info_button", { feature: label })}
-            aria-haspopup="dialog"
-            aria-expanded={showTooltip}
-            aria-controls={showTooltip ? `tip-${layer}` : undefined}
-          >
-            <img src="/images/icon_info.png" alt="" aria-hidden="true" className={sty.infoIconImg} />
-          </button>
-        </div>
-        
-          <Tooltip
-            show={showTooltip}
-            type={layer}
-            anchorRef={tooltipRef}
-            onClose={() => setShowTooltip(false)}
-            id={`tip-${layer}`}
-          /> 
-
-        <div className={sty["slider-container"]}>
-          <label htmlFor={sliderId} className={sty["srOnly"]}>{t('variable_weight_for', { label })}</label>
-          <input
-            id={sliderId}
-            type="range"
-            min="0"
-            max="3"
-            step="1"
-            disabled={!enabled}
-            value={sliderIndex >= 0 ? sliderIndex : 3}
-            className={`${sty.kbdFocus} ${!enabled ? sty["disabled"] : ""}`}
-            aria-label={t('variable_weight_for' , { label })}
-            aria-valuemin={0}
-            aria-valuemax={3}
-            aria-valuenow={sliderIndex >= 0 ? sliderIndex : 3}
-            aria-valuetext={
-              sliderIndex >= 0 ? weightLabels[sliderIndex] : t('emoji_level_unknown')
-            }
-            style={{
-              background: enabled
-                ? (() => {
-                    const pct = ((sliderIndex + 0.5) / 4) * 100;
-                    const pctGray = ((sliderIndex + 0.8) / 4) * 100;
-                    return `
-                      linear-gradient(to right,
-                        transparent 0%,
-                        transparent ${pct}%,
-                        #9ca3af ${pctGray}%,
-                        #9ca3af 100%
-                      ),
-                      linear-gradient(to right,
-                        #e6ea08ff 0%,
-                        #dc2626 100%
-                      )
-                    `;
-                  })()
-                : undefined
-            }}
-            onChange={(event) => {
-              const index = parseInt(event.target.value, 10);
-              const fakeEvent = {
-                target: {
-                  value: weightLevels[index],
-                },
-              };
-              handleInputChange(fakeEvent, layer);
-            }}
-          />
-          <span className={sty["slider-value"]} aria-hidden="true">
-            {sliderIndex >= 0 ? weightLabels[sliderIndex] : "-"}
-          </span>
-          <span className={sty["srOnly"]}>
-            {sliderIndex >= 0 ? weightTexts[sliderIndex] : t('emoji_level_unknown')}
-          </span>
-        </div>
-      </div>
-    );
-  };
+  const renderCheckbox = (layer, label) => (
+    <FeatureCheckbox
+      key={layer}
+      city={city}
+      layer={layer}
+      label={label}
+      enabled={enabledVariables.includes(layer)}
+      value={layerValues[layer]}
+      weightLevels={weightLevels}
+      weightLabels={weightLabels}
+      weightTexts={weightTexts}
+      toggleVariable={toggleVariable}
+      handleInputChange={handleInputChange}
+      setLiveMessage={setLiveMessage}
+      t={t}
+    />
+  );
   
   const [showInfo, setShowInfo] = React.useState(false);
   const infoIconRef = React.useRef();
+
+  if (availableFeatures.length === 0) {
+    return (
+      <div className={sty["sidebar-section"]}>
+        <div className={sty["button-container"]}>
+          <button
+            type="button"
+            onClick={() => {
+              if (startPoints.length === 0) {
+                alert(t("alert_select_start_first"));
+                return;
+              }
+              setComputeAccessibility(true);
+            }}
+            className={`${sty["get-catchment-button"]} ${sty.kbdFocus}`}
+          >
+            <span>{t('get_area')}</span>
+          </button>
+        </div>
+        <button
+          type="button"
+          onClick={handleClearResult}
+          className={`${sty["setup-button"]} ${sty.kbdFocus}`}
+        >
+          <span> {t('clear_result')}</span>
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div 
@@ -183,6 +242,7 @@ export default function VariableControls({
         <Tooltip
           show={showInfo}
           type="variable"
+          city={city}
           anchorRef={infoIconRef}
           onClose={() => setShowInfo(false)}
           id="tip-featureinfo"
@@ -287,7 +347,7 @@ export default function VariableControls({
           }}
           className={`${sty["get-catchment-button"]} ${sty.kbdFocus}`}
         >
-          <span>✚ {t('get_area')}</span>
+          <span>{t('get_area')}</span>
         </button>
       </div>
       {/* Clear Result Button */}

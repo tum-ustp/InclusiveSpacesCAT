@@ -35,6 +35,7 @@ const MapInstanceReporter = ({ useMap, onMapReady }) => {
  
 const MapComponent = ({ 
   cityCenter = [53.5503, 9.9920],
+  selectedCity: selectedCityProp,
   selectedLayers, 
   availableLayers,
   enabledVariables,
@@ -81,7 +82,8 @@ const MapComponent = ({
     (typeof window !== "undefined" &&
       (localStorage.getItem("selectedCity") || "hamburg")) ||
     "hamburg";
-  const [selectedCity, setSelectedCity] = useState(getSelectedCity);
+  const [storedSelectedCity] = useState(getSelectedCity);
+  const selectedCity = selectedCityProp || storedSelectedCity;
 
   const mapRegionLabel = t("aria_map_region");
 

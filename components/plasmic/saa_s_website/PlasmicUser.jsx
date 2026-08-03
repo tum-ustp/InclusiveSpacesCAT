@@ -22,6 +22,12 @@ import { cityLayerConfig } from "../../cityVariableConfig";
 
 const MapComponent = dynamic(() => import("../../MapComponent"), { ssr: false });
 
+const CITY_CENTERS = {
+  hamburg: [53.5503, 9.9920],
+  munich: [48.1372, 11.5756],
+  penteli: [38.0491, 23.8653],
+};
+
 createPlasmicElementProxy;
 
 export const PlasmicUser__VariantProps = [];
@@ -36,6 +42,7 @@ function useNextRouter() {
 
 function PlasmicUser__RenderFunc(props) {
   const { variants, overrides, forNode } = props;
+  const router = useNextRouter();
   const [selectingStart, setSelectingStart] = React.useState(false);
   const [startPoints, setStartPoints] = React.useState([]);
   const [computeAccessibility, setComputeAccessibility] = React.useState(false);
@@ -51,6 +58,7 @@ function PlasmicUser__RenderFunc(props) {
   const [clearTrigger, setClearTrigger] = React.useState(false);
   const [sidebarOpen, setSidebarOpen] = React.useState(true);
   const [highlightedIndex, setHighlightedIndex] = React.useState(null);
+  const [selectedCity, setSelectedCity] = React.useState("hamburg");
   const [cityCenter, setCityCenter] = React.useState([53.5503, 9.9920]); // hamburg as default
   const [isSearchZoom, setIsSearchZoom] = React.useState(false);
   const [canDownloadScreenshot, setCanDownloadScreenshot] = React.useState(false);
@@ -70,24 +78,33 @@ function PlasmicUser__RenderFunc(props) {
 
 
   React.useEffect(() => {
-    const storedCenter = localStorage.getItem("selectedCityCenter");
-    if (storedCenter) {
-      try {
-        setCityCenter(JSON.parse(storedCenter));
-      } catch (e) {
-        console.error("Invalid city center in storage", e);
-      }
-    }
-  }, []);
+    if (typeof window === "undefined") return;
+    if (router && !router.isReady) return;
 
-  React.useEffect(() => {
-    const city =
-      (typeof window !== "undefined" &&
-        (localStorage.getItem("selectedCity") || "hamburg")) ||
-      "hamburg";
+    const queryCity = Array.isArray(router?.query?.city)
+      ? router.query.city[0]
+      : router?.query?.city;
+    const storedCity = localStorage.getItem("selectedCity");
+    const nextCity = String(queryCity || storedCity || "hamburg").toLowerCase();
+    const safeCity = cityLayerConfig[nextCity] ? nextCity : "hamburg";
+    const center = CITY_CENTERS[safeCity];
 
-    setAvailableLayers(cityLayerConfig?.[city]?.mapLayers || []);
-  }, []);
+    setSelectedCity(safeCity);
+    setCityCenter(center);
+    setAvailableLayers(cityLayerConfig?.[safeCity]?.mapLayers || []);
+    setSelectedLayers((prev) =>
+      prev.filter((layer) =>
+        (cityLayerConfig?.[safeCity]?.mapLayers || []).some((item) => item.key === layer)
+      )
+    );
+    setEnabledVariables((prev) =>
+      prev.filter((variable) =>
+        (cityLayerConfig?.[safeCity]?.discomfortFeatures || []).includes(variable)
+      )
+    );
+    localStorage.setItem("selectedCity", safeCity);
+    localStorage.setItem("selectedCityCenter", JSON.stringify(center));
+  }, [router?.isReady, router?.query?.city]);
 
   const toggleCategory = (category) => {
     setOpenCategory(openCategory === category ? null : category);
@@ -215,6 +232,7 @@ function PlasmicUser__RenderFunc(props) {
               setWalkingSpeed={setWalkingSpeed}
             />
             <Sidebar
+              city={selectedCity}
               sidebarOpen={sidebarOpen}
               setSidebarOpen={setSidebarOpen}
               enabledVariables={enabledVariables}
@@ -251,6 +269,7 @@ function PlasmicUser__RenderFunc(props) {
               availableLayers={availableLayers}
             />
             <MapComponent
+              selectedCity={selectedCity}
               cityCenter={cityCenter}
               selectedLayers={selectedLayers}
               availableLayers={availableLayers}

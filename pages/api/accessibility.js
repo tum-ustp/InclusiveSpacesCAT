@@ -10,12 +10,29 @@ const CITY_CONFIG = {
   hamburg: {
     waysTable: "hh_ways",
     verticesTable: "hh_ways_vertices_pgr",
+    edgeIdColumn: "gid",
+    waysGeomColumn: "the_geom",
+    verticesGeomColumn: "the_geom",
+    supportsWeightedCosts: true,
     simplifyTolerance: 0.00005,
   },
   penteli: {
     waysTable: "pt_ways",
     verticesTable: "pt_ways_vertices_pgr",
+    edgeIdColumn: "gid",
+    waysGeomColumn: "the_geom",
+    verticesGeomColumn: "the_geom",
+    supportsWeightedCosts: true,
     simplifyTolerance: 0.00006,
+  },
+  munich: {
+    waysTable: "muc_ways_noded_4326_v2",
+    verticesTable: "muc_ways_vertices_pgr",
+    edgeIdColumn: "gid",
+    waysGeomColumn: "geom",
+    verticesGeomColumn: "geom",
+    supportsWeightedCosts: true,
+    simplifyTolerance: 0.00005,
   },
 };
 
@@ -47,7 +64,7 @@ export default async function handler(req, res) {
       `
         SELECT id
         FROM ${cityConfig.verticesTable}
-        ORDER BY the_geom <-> ST_SetSRID(ST_MakePoint($1, $2), 4326)
+        ORDER BY ${cityConfig.verticesGeomColumn} <-> ST_SetSRID(ST_MakePoint($1, $2), 4326)
         LIMIT 1;
       `,
       [lon, lat]
@@ -89,26 +106,26 @@ export default async function handler(req, res) {
             'SELECT gid AS id, source, target,
               cost / GREATEST(
                 LEAST(
-                  CASE WHEN noise_weight = 1 THEN ' || $3 || ' ELSE 1 END,
-                  CASE WHEN light_weight = 0 THEN ' || $4 || ' ELSE 1 END,
-                  CASE WHEN trafficlight_weight = 1 THEN ' || $5 || ' ELSE 1 END,
-                  CASE WHEN tactile_weight = 0 THEN ' || $6 || ' ELSE 1 END,
-                  CASE WHEN tree_weight = 0 THEN ' || $7 || ' ELSE 1 END,
-                  CASE WHEN temp_weight_s = 1 THEN ' || $8 || ' ELSE 1 END,
-                  CASE WHEN temp_weight_w = 1 THEN ' || $9 || ' ELSE 1 END,
-                  CASE WHEN blue_weight = 0 THEN ' || $10 || ' ELSE 1 END,
-                  CASE WHEN green_weight = 0 THEN ' || $11 || ' ELSE 1 END,
-                  CASE WHEN station_weight = 0 THEN ' || $12 || ' ELSE 1 END,
-                  CASE WHEN wc_d_weight = 0 THEN ' || $13 || ' ELSE 1 END,
-                  CASE WHEN path_width_weight = 1 THEN ' || $14 || ' ELSE 1 END,
-                  CASE WHEN stair_weight = 1 THEN ' || $15 || ' ELSE 1 END,
-                  CASE WHEN obstacle_weight = 1 THEN ' || $16 || ' ELSE 1 END,
-                  CASE WHEN slope_weight = 1 THEN ' || $17 || ' ELSE 1 END,
-                  CASE WHEN uneven_surfaces_weight = 1 THEN ' || $18 || ' ELSE 1 END,
-                  CASE WHEN poor_pavement_weight = 1 THEN ' || $19 || ' ELSE 1 END,
-                  CASE WHEN kerbs_h_weight = 1 THEN ' || $20 || ' ELSE 1 END,
-                  CASE WHEN facilities_weight = 0 THEN ' || $21 || ' ELSE 1 END,
-                  CASE WHEN pedestrian_flow_weight = 1 THEN ' || $22 || ' ELSE 1 END
+                  CASE WHEN noise_weight = 1 THEN ' || $3::float || ' ELSE 1 END,
+                  CASE WHEN light_weight = 0 THEN ' || $4::float || ' ELSE 1 END,
+                  CASE WHEN trafficlight_weight = 1 THEN ' || $5::float || ' ELSE 1 END,
+                  CASE WHEN tactile_weight = 0 THEN ' || $6::float || ' ELSE 1 END,
+                  CASE WHEN tree_weight = 0 THEN ' || $7::float || ' ELSE 1 END,
+                  CASE WHEN temp_weight_s = 1 THEN ' || $8::float || ' ELSE 1 END,
+                  CASE WHEN temp_weight_w = 1 THEN ' || $9::float || ' ELSE 1 END,
+                  CASE WHEN blue_weight = 0 THEN ' || $10::float || ' ELSE 1 END,
+                  CASE WHEN green_weight = 0 THEN ' || $11::float || ' ELSE 1 END,
+                  CASE WHEN station_weight = 0 THEN ' || $12::float || ' ELSE 1 END,
+                  CASE WHEN wc_d_weight = 0 THEN ' || $13::float || ' ELSE 1 END,
+                  CASE WHEN path_width_weight = 1 THEN ' || $14::float || ' ELSE 1 END,
+                  CASE WHEN stair_weight = 1 THEN ' || $15::float || ' ELSE 1 END,
+                  CASE WHEN obstacle_weight = 1 THEN ' || $16::float || ' ELSE 1 END,
+                  CASE WHEN slope_weight = 1 THEN ' || $17::float || ' ELSE 1 END,
+                  CASE WHEN uneven_surfaces_weight = 1 THEN ' || $18::float || ' ELSE 1 END,
+                  CASE WHEN poor_pavement_weight = 1 THEN ' || $19::float || ' ELSE 1 END,
+                  CASE WHEN kerbs_h_weight = 1 THEN ' || $20::float || ' ELSE 1 END,
+                  CASE WHEN facilities_weight = 0 THEN ' || $21::float || ' ELSE 1 END,
+                  CASE WHEN pedestrian_flow_weight = 1 THEN ' || $22::float || ' ELSE 1 END
                 ),
                 1e-6
               ) AS cost
@@ -120,10 +137,10 @@ export default async function handler(req, res) {
         ),
         final_roads AS (
           SELECT
-            w.gid,
-            w.the_geom
+            w.${cityConfig.edgeIdColumn} AS gid,
+            w.${cityConfig.waysGeomColumn} AS the_geom
           FROM ${cityConfig.waysTable} w
-          WHERE w.gid IN (
+          WHERE w.${cityConfig.edgeIdColumn} IN (
             SELECT edge
             FROM dd
             WHERE edge IS NOT NULL AND edge <> -1

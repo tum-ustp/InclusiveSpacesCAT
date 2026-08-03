@@ -46,6 +46,16 @@ export const cityLayerConfig = {
       { key: "temp_summer", type: "geojson" },
       { key: "temp_winter", type: "geojson" }
     ]
+  },
+  munich: {
+    discomfortFeatures: [
+      "noise", "light", "tree", "trafficLight", "tactile_pavement",
+      "temperatureSummer", "temperatureWinter", "greeninf", "blueinf",
+      "station", "wcDisabled", "narrowRoads", "stair",
+      "obstacle", "slope", "unevenSurface", "poorPavement", "kerbsHigh",
+      "facility", "pedestrianFlow"
+    ],
+    mapLayers: []
   }
   // other cities...
 };

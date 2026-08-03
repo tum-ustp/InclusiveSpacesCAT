@@ -90,6 +90,7 @@ export default function Sidebar({
           />
   
           <VariableControls
+            city={city}
             enabledVariables={enabledVariables} 
             toggleVariable={toggleVariable}  
             selectedLayers={selectedLayers}

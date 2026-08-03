@@ -371,26 +371,30 @@ function Header(
               }}
             >
               {[
-                { id: "hamburg", name: "Hamburg", center: [53.5503, 9.9920] },
-                { id: "penteli", name: "Penteli", center: [38.0491, 23.8653] },
-              ].map(city => (
-                <button
-                  key={city.id}
-                  type="button"
-                  className={sty["city-item"]}
-                  role="menuitem"
-                  onClick={() => {
-                    setShowCityMenu(false);
-                    localStorage.setItem("selectedCity", city.id);
-                    localStorage.setItem("selectedCityCenter", JSON.stringify(city.center));
-                    window.location.href = `/user?city=${city.id}`;
-                  }}
-                  aria-label={t("header_switch_city", { city: city.name })}
-                  title={t("header_switch_city", { city: city.name })}
-                >
-                  {city.name}
-                </button>
-              ))}
+                { id: "hamburg", nameKey: "header_city_hamburg", defaultName: "Hamburg", center: [53.5503, 9.9920] },
+                { id: "munich", nameKey: "header_city_munich", defaultName: "Munich", center: [48.1372, 11.5756] },
+                { id: "penteli", nameKey: "header_city_penteli", defaultName: "Penteli", center: [38.0491, 23.8653] },
+              ].map(city => {
+                const cityName = t(city.nameKey, { defaultValue: city.defaultName });
+                return (
+                  <button
+                    key={city.id}
+                    type="button"
+                    className={sty["city-item"]}
+                    role="menuitem"
+                    onClick={() => {
+                      setShowCityMenu(false);
+                      localStorage.setItem("selectedCity", city.id);
+                      localStorage.setItem("selectedCityCenter", JSON.stringify(city.center));
+                      window.location.href = `/user?city=${city.id}`;
+                    }}
+                    aria-label={t("header_switch_city", { city: cityName })}
+                    title={t("header_switch_city", { city: cityName })}
+                  >
+                    {cityName}
+                  </button>
+                );
+              })}
             </div>
           )}
         </div>
