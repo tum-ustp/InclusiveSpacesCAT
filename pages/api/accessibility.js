@@ -1,10 +1,22 @@
 import { Pool } from "pg";
 import { performance } from "node:perf_hooks";
 
-const pool = new Pool({
-  connectionString: "postgresql://postgres.tcxrvmwzddsyivnfurdx:incspace123456@aws-0-eu-central-1.pooler.supabase.com:6543/postgres",
-  ssl: { rejectUnauthorized: false },
-});
+let pool;
+
+const getPool = () => {
+  if (!process.env.DATABASE_URL) {
+    throw new Error("DATABASE_URL environment variable is not configured");
+  }
+
+  if (!pool) {
+    pool = new Pool({
+      connectionString: process.env.DATABASE_URL,
+      ssl: { rejectUnauthorized: false },
+    });
+  }
+
+  return pool;
+};
 
 const CITY_CONFIG = {
   hamburg: {
@@ -59,8 +71,9 @@ export default async function handler(req, res) {
   const maxDistance = (walkingSpeed * 1000 * walkingTime) / 60;
 
   try {
+    const db = getPool();
     const nearestVertexStart = performance.now();
-    const nearestVertexResult = await pool.query(
+    const nearestVertexResult = await db.query(
       `
         SELECT id
         FROM ${cityConfig.verticesTable}
@@ -98,7 +111,7 @@ export default async function handler(req, res) {
     const pedestrianFlowVariable = parseValue(req.query.pedestrianFlow);
 
     const routingQueryStart = performance.now();
-    const result = await pool.query(
+    const result = await db.query(
       `
         WITH dd AS (
           SELECT *
