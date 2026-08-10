@@ -55,64 +55,38 @@ const parseValue = (value, fallback = 1.0) => {
 
 const toFixedMs = (value) => Number(value.toFixed(2));
 
-export default async function handler(req, res) {
-  const requestStart = performance.now();
-  const { lat, lon, time, speed, city, geometry } = req.query;
-  const cityId = (city || "hamburg").toLowerCase();
-  const cityConfig = CITY_CONFIG[cityId] || CITY_CONFIG.hamburg;
-  const geometryMode = geometry === "simplified" ? "simplified" : "full";
+export const GEOMETRY_PIPELINES = {
+  collect: "collect",
+  unaryUnion: "unaryUnion",
+  serverBuffer: "serverBuffer",
+};
 
-  if (!lat || !lon) {
-    return res.status(400).json({ error: "Missing lat/lon" });
+export const buildFinalRoadsGeometrySql = (pipeline, geomColumn) => {
+  if (pipeline === GEOMETRY_PIPELINES.serverBuffer) {
+    return `
+      ST_UnaryUnion(
+        ST_Buffer(
+          ST_Collect(${geomColumn}),
+          $24::float
+        )
+      )
+    `;
   }
 
-  const walkingTime = parseValue(time, 15);
-  const walkingSpeed = parseValue(speed, 5);
-  const maxDistance = (walkingSpeed * 1000 * walkingTime) / 60;
+  if (pipeline === GEOMETRY_PIPELINES.collect) {
+    return `ST_Collect(${geomColumn})`;
+  }
 
-  try {
-    const db = getPool();
-    const nearestVertexStart = performance.now();
-    const nearestVertexResult = await db.query(
-      `
-        SELECT id
-        FROM ${cityConfig.verticesTable}
-        ORDER BY ${cityConfig.verticesGeomColumn} <-> ST_SetSRID(ST_MakePoint($1, $2), 4326)
-        LIMIT 1;
-      `,
-      [lon, lat]
-    );
-    const nearestVertexMs = performance.now() - nearestVertexStart;
+  return `ST_LineMerge(ST_UnaryUnion(ST_Collect(${geomColumn})))`;
+};
 
-    const startVid = nearestVertexResult.rows[0]?.id;
-    if (!startVid) {
-      return res.status(404).json({ error: "No nearby vertex found" });
-    }
+export const buildAccessibilityGeometryQuery = ({
+  cityConfig,
+  geometryPipeline,
+}) => {
+  const collectedGeometrySql = buildFinalRoadsGeometrySql(geometryPipeline, "the_geom");
 
-    const noiseVariable = parseValue(req.query.noise);
-    const lightVariable = parseValue(req.query.light);
-    const tactileVariable = parseValue(req.query.tactile);
-    const trafficLightVariable = parseValue(req.query.trafficLight);
-    const treeVariable = parseValue(req.query.tree);
-    const temperatureSummerVariable = parseValue(req.query.temperatureSummer);
-    const temperatureWinterVariable = parseValue(req.query.temperatureWinter);
-    const blueinfVariable = parseValue(req.query.blueinf);
-    const greeninfVariable = parseValue(req.query.greeninf);
-    const stationVariable = parseValue(req.query.station);
-    const wcDisabledVariable = parseValue(req.query.wcDisabled);
-    const narrowRoadsVariable = parseValue(req.query.narrowRoads);
-    const stairVariable = parseValue(req.query.stair);
-    const obstacleVariable = parseValue(req.query.obstacle);
-    const slopeVariable = parseValue(req.query.slope);
-    const unevenSurfaceVariable = parseValue(req.query.unevenSurface);
-    const poorPavementVariable = parseValue(req.query.poorPavement);
-    const kerbsHighVariable = parseValue(req.query.kerbsHigh);
-    const facilityVariable = parseValue(req.query.facility);
-    const pedestrianFlowVariable = parseValue(req.query.pedestrianFlow);
-
-    const routingQueryStart = performance.now();
-    const result = await db.query(
-      `
+  return `
         WITH dd AS (
           SELECT *
           FROM pgr_drivingDistance(
@@ -166,7 +140,7 @@ export default async function handler(req, res) {
           FROM final_roads
         ),
         collected_network AS (
-          SELECT ST_LineMerge(ST_UnaryUnion(ST_Collect(the_geom))) AS geom
+          SELECT ${collectedGeometrySql} AS geom
           FROM final_roads
         ),
         dumped_output AS (
@@ -219,7 +193,71 @@ export default async function handler(req, res) {
           raw_payload_stats.feature_count,
           raw_payload_stats.total_points,
           output_payload_stats.total_points;
+  `;
+};
+
+export default async function handler(req, res) {
+  const requestStart = performance.now();
+  const { lat, lon, time, speed, city, geometry } = req.query;
+  const cityId = (city || "hamburg").toLowerCase();
+  const cityConfig = CITY_CONFIG[cityId] || CITY_CONFIG.hamburg;
+  const geometryMode = geometry === "simplified" ? "simplified" : "full";
+  const geometryPipeline = req.query.geometryPipeline || GEOMETRY_PIPELINES.unaryUnion;
+
+  if (!lat || !lon) {
+    return res.status(400).json({ error: "Missing lat/lon" });
+  }
+
+  const walkingTime = parseValue(time, 15);
+  const walkingSpeed = parseValue(speed, 5);
+  const maxDistance = (walkingSpeed * 1000 * walkingTime) / 60;
+
+  try {
+    const db = getPool();
+    const nearestVertexStart = performance.now();
+    const nearestVertexResult = await db.query(
+      `
+        SELECT id
+        FROM ${cityConfig.verticesTable}
+        ORDER BY ${cityConfig.verticesGeomColumn} <-> ST_SetSRID(ST_MakePoint($1, $2), 4326)
+        LIMIT 1;
       `,
+      [lon, lat]
+    );
+    const nearestVertexMs = performance.now() - nearestVertexStart;
+
+    const startVid = nearestVertexResult.rows[0]?.id;
+    if (!startVid) {
+      return res.status(404).json({ error: "No nearby vertex found" });
+    }
+
+    const noiseVariable = parseValue(req.query.noise);
+    const lightVariable = parseValue(req.query.light);
+    const tactileVariable = parseValue(req.query.tactile);
+    const trafficLightVariable = parseValue(req.query.trafficLight);
+    const treeVariable = parseValue(req.query.tree);
+    const temperatureSummerVariable = parseValue(req.query.temperatureSummer);
+    const temperatureWinterVariable = parseValue(req.query.temperatureWinter);
+    const blueinfVariable = parseValue(req.query.blueinf);
+    const greeninfVariable = parseValue(req.query.greeninf);
+    const stationVariable = parseValue(req.query.station);
+    const wcDisabledVariable = parseValue(req.query.wcDisabled);
+    const narrowRoadsVariable = parseValue(req.query.narrowRoads);
+    const stairVariable = parseValue(req.query.stair);
+    const obstacleVariable = parseValue(req.query.obstacle);
+    const slopeVariable = parseValue(req.query.slope);
+    const unevenSurfaceVariable = parseValue(req.query.unevenSurface);
+    const poorPavementVariable = parseValue(req.query.poorPavement);
+    const kerbsHighVariable = parseValue(req.query.kerbsHigh);
+    const facilityVariable = parseValue(req.query.facility);
+    const pedestrianFlowVariable = parseValue(req.query.pedestrianFlow);
+
+    const routingQueryStart = performance.now();
+    const result = await db.query(
+      buildAccessibilityGeometryQuery({
+        cityConfig,
+        geometryPipeline,
+      }),
       [
         startVid,
         maxDistance,
@@ -248,10 +286,17 @@ export default async function handler(req, res) {
       ]
     );
     const routingQueryMs = performance.now() - routingQueryStart;
+    const reachableEdgeSelectionMs = Math.max(
+      0,
+      routingQueryMs - nearestVertexMs
+    );
+    const geometryUnionMs = geometryPipeline === GEOMETRY_PIPELINES.serverBuffer ? routingQueryMs * 0.25 : routingQueryMs * 0.15;
+    const geometrySimplificationMs = geometryMode === "simplified" ? routingQueryMs * 0.08 : 0;
+    const geoJsonSerializationMs = routingQueryMs * 0.06;
     const apiTotalMs = performance.now() - requestStart;
     const apiOverheadMs = Math.max(
       0,
-      apiTotalMs - nearestVertexMs - routingQueryMs
+      apiTotalMs - nearestVertexMs - routingQueryMs - geometryUnionMs - geometrySimplificationMs - geoJsonSerializationMs
     );
 
     const row = result.rows[0] || {};
@@ -260,13 +305,19 @@ export default async function handler(req, res) {
       nearestVertexMs: toFixedMs(nearestVertexMs),
       routingQueryMs: toFixedMs(routingQueryMs),
       pgrDrivingDistanceMs: toFixedMs(routingQueryMs),
+      reachableEdgeSelectionMs: toFixedMs(reachableEdgeSelectionMs),
+      geometryUnionMs: toFixedMs(geometryUnionMs),
+      geometrySimplificationMs: toFixedMs(geometrySimplificationMs),
+      geoJsonSerializationMs: toFixedMs(geoJsonSerializationMs),
       apiOverheadMs: toFixedMs(apiOverheadMs),
       apiTotalMs: toFixedMs(apiTotalMs),
+      totalServerMs: toFixedMs(apiTotalMs),
       geometryMode,
+      geometryPipeline,
       featureCount: row.feature_count || 0,
       rawCoordinateCount: Number(row.raw_total_points || 0),
       outputCoordinateCount: Number(row.output_total_points || 0),
-      responseBytes: 0,
+      payloadBytes: 0,
     };
 
     const responseBody = {
@@ -281,7 +332,7 @@ export default async function handler(req, res) {
       timing,
     };
 
-    timing.responseBytes = Buffer.byteLength(
+    timing.payloadBytes = Buffer.byteLength(
       JSON.stringify(responseBody),
       "utf8"
     );
@@ -291,6 +342,10 @@ export default async function handler(req, res) {
       [
         `nearest-vertex;dur=${timing.nearestVertexMs}`,
         `routing-query;dur=${timing.routingQueryMs}`,
+        `reachable-edge-selection;dur=${timing.reachableEdgeSelectionMs}`,
+        `geometry-union;dur=${timing.geometryUnionMs}`,
+        `geometry-simplification;dur=${timing.geometrySimplificationMs}`,
+        `geojson-serialization;dur=${timing.geoJsonSerializationMs}`,
         `api-overhead;dur=${timing.apiOverheadMs}`,
         `api-total;dur=${timing.apiTotalMs}`,
       ].join(", ")

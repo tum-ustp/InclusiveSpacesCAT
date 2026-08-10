@@ -132,13 +132,26 @@ export const buildBufferedAreaWithTiming = (roads, bufferDistance, contourSettin
 };
 
 export const logAccessibilityTiming = (phaseLabel, requestTiming, turfTiming, inputGeometryStats) => {
+  const row = getAccessibilityTimingRow(phaseLabel, requestTiming, turfTiming, inputGeometryStats);
+
+  console.groupCollapsed(`[accessibility timing] ${phaseLabel}`);
+  console.table(row);
+  console.groupEnd();
+};
+
+export const getAccessibilityTimingRow = (phaseLabel, requestTiming, turfTiming, inputGeometryStats) => {
   const serverTiming = requestTiming?.serverTiming || {};
   const fetchAndParseMs = Number((requestTiming?.fetchAndParseMs || 0).toFixed(2));
   const apiTotalMs = Number((serverTiming.apiTotalMs || 0).toFixed(2));
+  const totalServerMs = Number((serverTiming.totalServerMs ?? serverTiming.apiTotalMs ?? 0).toFixed(2));
   const nearestVertexMs = Number((serverTiming.nearestVertexMs || 0).toFixed(2));
   const routingQueryMs = Number(
     (serverTiming.routingQueryMs ?? serverTiming.pgrDrivingDistanceMs ?? 0).toFixed(2)
   );
+  const reachableEdgeSelectionMs = Number((serverTiming.reachableEdgeSelectionMs || 0).toFixed(2));
+  const geometryUnionMs = Number((serverTiming.geometryUnionMs || 0).toFixed(2));
+  const geometrySimplificationMs = Number((serverTiming.geometrySimplificationMs || 0).toFixed(2));
+  const geoJsonSerializationMs = Number((serverTiming.geoJsonSerializationMs || 0).toFixed(2));
   const apiOverheadMs = Number(
     (serverTiming.apiOverheadMs ?? Math.max(0, apiTotalMs - nearestVertexMs - routingQueryMs)).toFixed(2)
   );
@@ -150,22 +163,27 @@ export const logAccessibilityTiming = (phaseLabel, requestTiming, turfTiming, in
   const serverFeatureCount = Number(serverTiming.featureCount || 0);
   const serverRawCoordinateCount = Number(serverTiming.rawCoordinateCount || 0);
   const serverOutputCoordinateCount = Number(serverTiming.outputCoordinateCount || 0);
-  const responseBytes = Number(serverTiming.responseBytes || 0);
+  const payloadBytes = Number(serverTiming.payloadBytes ?? serverTiming.responseBytes ?? 0);
 
-  console.groupCollapsed(`[accessibility timing] ${phaseLabel}`);
-  console.table({
+  return {
+    phaseLabel,
     geometryMode: serverTiming.geometryMode || "full",
     routingQueryMs,
+    reachableEdgeSelectionMs,
+    geometryUnionMs,
+    geometrySimplificationMs,
+    geoJsonSerializationMs,
     apiOverheadMs,
     nearestVertexMs,
     apiTotalMs,
+    totalServerMs,
     fetchAndParseMs,
     networkAndBrowserParseMs,
     postServerToClientReadyMs,
     serverFeatureCount,
     serverRawCoordinateCount,
     serverOutputCoordinateCount,
-    responseBytes,
+    payloadBytes,
     clientFeatureCount: inputGeometryStats?.featureCount || 0,
     clientCoordinateCount: inputGeometryStats?.coordinateCount || 0,
     combineMs: Number((turfTiming?.combineMs || 0).toFixed(2)),
@@ -174,8 +192,7 @@ export const logAccessibilityTiming = (phaseLabel, requestTiming, turfTiming, in
     areaMs: Number((turfTiming?.areaMs || 0).toFixed(2)),
     turfProcessingMs,
     endToEndMs: Number((fetchAndParseMs + turfProcessingMs).toFixed(2)),
-  });
-  console.groupEnd();
+  };
 };
 
 export const getContourSettings = (featureCount) => {
