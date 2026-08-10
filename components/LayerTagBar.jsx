@@ -18,6 +18,7 @@ export default function LayerTagBar({ selectedLayers, toggleLayer, availableLaye
     tree_wms: t('display_tree'),
     trafic_light_wms: t('display_traffic'),
     streetlight: t('display_light'),
+    munich_lighting: t('display_light'),
     tactile_guidance: t('display_tactile'),
     blue_infrastructure_wms: t('display_blue_inf'),
     green_infrastructure_wms: t('display_green_inf'),
@@ -193,6 +194,54 @@ export default function LayerTagBar({ selectedLayers, toggleLayer, availableLaye
     ));
   };
 
+  const customLegendItems = {
+    munich_lighting: [
+      {
+        label: t("layertag_lighting_lit"),
+        symbol: "line",
+        color: "#f2c94c"
+      },
+      {
+        label: t("layertag_lighting_unlit"),
+        symbol: "line",
+        color: "#4b5563",
+        dashed: true
+      },
+      {
+        label: t("layertag_lighting_streetlamp"),
+        symbol: "dot",
+        color: "#ffd166"
+      }
+    ]
+  };
+
+  const renderCustomLegend = (layer) => {
+    const items = customLegendItems[layer];
+    if (!items) return null;
+
+    return items.map((item) => (
+      <div key={`${layer}-${item.label}`} className={styles.layerTagLegendItem}>
+        <div
+          style={{
+            width: item.symbol === "line" ? "22px" : "14px",
+            height: item.symbol === "line" ? "0" : "14px",
+            borderRadius: item.symbol === "line" ? "0" : "50%",
+            backgroundColor: item.symbol === "line" ? "transparent" : item.color,
+            border: item.symbol === "line"
+              ? "none"
+              : "1px solid #999",
+            borderTop: item.symbol === "line"
+              ? `${item.dashed ? "2px dashed" : "3px solid"} ${item.color}`
+              : undefined
+          }}
+          aria-hidden="true"
+          role="presentation"
+        />
+        <span style={{ color: "#3A3A3A" }}>{item.label}</span>
+      </div>
+    ));
+  };
+
   if (!selectedLayers || selectedLayers.length === 0) return null;
 
   return (
@@ -231,7 +280,7 @@ export default function LayerTagBar({ selectedLayers, toggleLayer, availableLaye
 
           {/* legend for each layer */}
           <div>
-            {renderDotLegend(layer) || (
+            {renderCustomLegend(layer) || renderDotLegend(layer) || (
               isWmsLayer(layer, layerTypeMap) ? (
               iconUrls[layer]                           // legend with icons
                 ? iconUrls[layer].map((url, i) => (
