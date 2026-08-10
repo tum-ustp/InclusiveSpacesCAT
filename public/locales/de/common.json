@@ -434,6 +434,11 @@
       "desc": "Dieser Datensatz enthält die Position einzelner Straßenbeleuchtungen in Hamburg. Jeder Punkt stellt einen einzelnen Lichtmast dar; Gruppen oder Unterknoten sind nicht enthalten.",
       "source": "OpenStreetMap, 2025"
     },
+    "munich_lighting": {
+      "title": "Straßenbeleuchtung",
+      "desc": "Dieser Datensatz kombiniert kartierte Standorte von Straßenlaternen und Straßenabschnitte mit Beleuchtungsinformationen aus OpenStreetMap. Die Straßenbeleuchtung wird hauptsächlich aus highway=street_lamp-Punkten und lit=*-Tags an highway-Objekten abgeleitet. Für die Berechnung des Erreichbarkeitsgebiets wurden Straßenabschnitte ohne bestätigte Beleuchtungsdaten als nicht beleuchtet behandelt.",
+      "source": "OpenStreetMap, 2026"
+    },
     "trafic_light_wms": {
       "title": "Ampeln",
       "desc": "Der Datensatz enthält Standort, Name und Knotennummer aller Ampeln im Hamburger Stadtgebiet (ohne Hafenbehörde HPA). Signalisierten Kreuzungen oder Unterknoten werden nicht separat angezeigt.",
@@ -587,6 +592,9 @@
   "layertag_temp_winter_1": "Kalt",
   "layertag_temp_winter_2": "Sehr kalt", 
   "layertag_trafic_light": "Ampeln",
+  "layertag_lighting_lit": "Beleuchtete Straßen",
+  "layertag_lighting_unlit": "Unbeleuchtete Straßen",
+  "layertag_lighting_streetlamp": "Straßenlaternen",
   "layertag_tree_0": "Gepflanzter Baum",
   "layertag_tree_1": "Geplanter Baum",
   "layertag_tree_2": "Nicht zugeordnet",

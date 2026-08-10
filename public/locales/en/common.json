@@ -433,6 +433,11 @@
       "desc": "This dataset contains the location of street lighting points. Each feature represents an individual light pole; grouped or sub-nodes are not included.",
       "source": "OpenStreetMap, 2025"
     },
+    "munich_lighting": {
+      "title": "Street Lights",
+      "desc": "This dataset combines mapped street lamp locations and street segments with lighting information from OpenStreetMap. Street lighting is derived mainly from highway=street_lamp points and lit=* tags on highway features. For the accessibility catchment calculation, street segments without confirmed lighting data were treated as not lit.",
+      "source": "OpenStreetMap, 2026"
+    },
     "trafic_light_wms": {
       "title": "Traffic Lights",
       "desc": "The dataset contains the location, name, and node number of all traffic lights in the Hamburg city area (excluding the Hamburg Port Authority [HPA]). Signalized crossings/junctions, etc., which are defined as sub-nodes of the traffic lights, are not displayed as separate points.",
@@ -586,6 +591,9 @@
   "layertag_temp_winter_1": "Cold",
   "layertag_temp_winter_2": "Very Cold",
   "layertag_trafic_light": "Traffic Lights",
+  "layertag_lighting_lit": "Lit streets",
+  "layertag_lighting_unlit": "Unlit streets",
+  "layertag_lighting_streetlamp": "Street lamps",
   "layertag_tree_0": "Planted Tree",
   "layertag_tree_1": "Planned Tree",
   "layertag_tree_2": "Unassigned Spot",

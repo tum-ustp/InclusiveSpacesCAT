@@ -185,6 +185,7 @@ export default function MapLayers({ selectedLayers, toggleLayer, availableLayers
           sty={sty}
         >
           {findLayer("streetlight") && renderCheckbox(findLayer("streetlight"), t('display_light'))}
+          {findLayer("munich_lighting") && renderCheckbox(findLayer("munich_lighting"), t('display_light'))}
           {findLayer("trafic_light_wms") && renderCheckbox(findLayer("trafic_light_wms"), t('display_traffic'))}
           {findLayer("trafic_light") && renderCheckbox(findLayer("trafic_light"), t('display_traffic'))}
           {findLayer("tactile_guidance") && renderCheckbox(findLayer("tactile_guidance"), t('display_tactile'))}

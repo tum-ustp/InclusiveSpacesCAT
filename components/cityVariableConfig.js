@@ -55,7 +55,9 @@ export const cityLayerConfig = {
       "obstacle", "slope", "unevenSurface", "poorPavement", "kerbsHigh",
       "facility", "pedestrianFlow"
     ],
-    mapLayers: []
+    mapLayers: [
+      { key: "munich_lighting", type: "geojson" }
+    ]
   }
   // other cities...
 };

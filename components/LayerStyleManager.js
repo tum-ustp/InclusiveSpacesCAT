@@ -13,7 +13,11 @@ import { HAMBURG_FACILITY_POI_COLORS } from "./poiConfig";
 
 // layer grounp for tactile guidance
 export const layerGroupMap = {
-  tactile_guidance: ["tactile_points", "tactile_lines", "tactile_polygons"]
+  tactile_guidance: ["tactile_points", "tactile_lines", "tactile_polygons"],
+  munich_lighting: [
+    "muc_osm_lit_highways_visual",
+    "muc_street_lamps_visual"
+  ]
 };
 
 // Build a fast lookup for layer type from availableLayers config [{key,type}, ...]
@@ -34,12 +38,26 @@ export function getStyle(layer, feature) {
 
   switch (layer) { 
     case "streetlight": // hamburg
+    case "muc_street_lamps_visual":
       return {
         radius: 5,
         fillColor: "#ffd166",
         fillOpacity: 0.8,
         stroke: false
       }; 
+    case "muc_osm_lit_highways_visual": {
+      const lighting = String(
+        feature?.properties?.lighting ?? feature?.properties?.lit ?? ""
+      ).toLowerCase();
+      const isLit = lighting === "lit" || lighting === "yes";
+
+      return {
+        color: isLit ? "#ffac29" : "#4b5563",
+        weight: 2.5,
+        opacity: isLit ? 0.9 : 0.75,
+        dashArray: isLit ? undefined : "5,5"
+      };
+    }
     case "tactile_points":
       return {
         radius: 5,
