@@ -51,7 +51,7 @@ const ReachabilityLayers = ({
       {selectedLayers.map((layer) => {
         if (!isWmsLayer(layer, layerTypeMap)) return null;
         const WmsComponent = wmsLayerComponents[layer];
-        return WmsComponent ? <WmsComponent key={layer} /> : null;
+        return WmsComponent ? <WmsComponent key={layer} city={selectedCity} /> : null;
       })}
 
       {/* Render Geojson Layers based on selectedLayers*/}

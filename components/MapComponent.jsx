@@ -228,9 +228,9 @@ const MapComponent = ({
 
   // Load GeoJSON data for the selected layers (sidebar map layers)
   useEffect(() => {
-    const loadGeoJsonData = async () => {
-      const newGeoJsonData = {};
+    let cancelled = false;
 
+    const loadGeoJsonData = async () => {
       const filteredSelectedLayers = selectedLayers.filter((layer) =>
         availableLayerKeys.has(layer)
       );
@@ -244,33 +244,61 @@ const MapComponent = ({
         return layerGroupMap[layer] || [layer]; // Expand the tactile_guidance and other grouped layers
       });
 
-      for (const layer of expandedLayers) { 
-        if (isWmsLayer(layer, layerTypeMap)) continue;
+      const expandedLayerSet = new Set(expandedLayers);
 
-        try {
+      setGeoJsonData((prev) =>
+        Object.fromEntries(
+          Object.entries(prev).filter(([key]) =>
+            key.startsWith("poi_") || expandedLayerSet.has(key)
+          )
+        )
+      );
+
+      const loadableLayers = expandedLayers.filter(
+        (layer) => !isWmsLayer(layer, layerTypeMap)
+      );
+
+      const layerRequests = new Map(
+        loadableLayers.map((layer) => {
           const filePath = layer.startsWith("poi_")
             ? `/data/POI/${layer}.geojson`
             : `/data/${selectedCity}/${layer}.geojson`;
-          const res = await fetch(filePath);
-          const data = await res.json();
-          newGeoJsonData[layer] = data;
+          const request = fetch(filePath)
+            .then((res) => {
+              if (!res.ok) {
+                throw new Error(`Failed to load ${filePath}: ${res.status}`);
+              }
+              return res.json();
+            })
+            .then((data) => ({ data }))
+            .catch((error) => ({ error }));
+
+          return [layer, request];
+        })
+      );
+
+      for (const layer of loadableLayers) {
+        try {
+          const result = await layerRequests.get(layer);
+          if (cancelled) return;
+          if (result.error) {
+            throw result.error;
+          }
+          setGeoJsonData((prev) => ({
+            ...prev,
+            [layer]: result.data
+          }));
         } catch (err) {
+          if (cancelled) return;
           console.error("Failed to load:", layer, err);
         }
       }
-
-      setGeoJsonData((prev) => {
-        const preservedPoiData = Object.fromEntries(
-          Object.entries(prev).filter(([key]) => key.startsWith("poi_"))
-        );
-        return {
-          ...preservedPoiData,
-          ...newGeoJsonData
-        };
-      });
     };
 
     loadGeoJsonData();
+    return () => {
+      cancelled = true;
+    };
    }, [selectedLayers, selectedCity, layerTypeMap, availableLayerKeys]);
   
   useEffect(() => {

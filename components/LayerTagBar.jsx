@@ -5,7 +5,12 @@ import { HAMBURG_POI_CONFIG } from "./poiConfig";
 import { useTranslation } from 'next-i18next';
  
 
-export default function LayerTagBar({ selectedLayers, toggleLayer, availableLayers = [] }) {
+export default function LayerTagBar({
+  selectedLayers,
+  toggleLayer,
+  availableLayers = [],
+  selectedCity = "hamburg"
+}) {
   const { t } = useTranslation("common");
   // Label display name mapping
   const layerTypeMap = React.useMemo(
@@ -195,6 +200,22 @@ export default function LayerTagBar({ selectedLayers, toggleLayer, availableLaye
   };
 
   const customLegendItems = {
+    ...(selectedCity === "munich"
+      ? {
+          trafic_light_wms: [
+            {
+              label: t("layertag_munich_traffic_light_additional"),
+              symbol: "image",
+              src: "/legends/munich/traffic-light-additional.png"
+            },
+            {
+              label: t("layertag_munich_traffic_light_standard"),
+              symbol: "image",
+              src: "/legends/munich/traffic-light.png"
+            }
+          ]
+        }
+      : {}),
     munich_lighting: [
       {
         label: t("layertag_lighting_lit"),
@@ -221,22 +242,31 @@ export default function LayerTagBar({ selectedLayers, toggleLayer, availableLaye
 
     return items.map((item) => (
       <div key={`${layer}-${item.label}`} className={styles.layerTagLegendItem}>
-        <div
-          style={{
-            width: item.symbol === "line" ? "22px" : "14px",
-            height: item.symbol === "line" ? "0" : "14px",
-            borderRadius: item.symbol === "line" ? "0" : "50%",
-            backgroundColor: item.symbol === "line" ? "transparent" : item.color,
-            border: item.symbol === "line"
-              ? "none"
-              : "1px solid #999",
-            borderTop: item.symbol === "line"
-              ? `${item.dashed ? "2px dashed" : "3px solid"} ${item.color}`
-              : undefined
-          }}
-          aria-hidden="true"
-          role="presentation"
-        />
+        {item.symbol === "image" ? (
+          <img
+            src={item.src}
+            alt=""
+            aria-hidden="true"
+            className={styles.layerTagIcon}
+          />
+        ) : (
+          <div
+            style={{
+              width: item.symbol === "line" ? "22px" : "14px",
+              height: item.symbol === "line" ? "0" : "14px",
+              borderRadius: item.symbol === "line" ? "0" : "50%",
+              backgroundColor: item.symbol === "line" ? "transparent" : item.color,
+              border: item.symbol === "line"
+                ? "none"
+                : "1px solid #999",
+              borderTop: item.symbol === "line"
+                ? `${item.dashed ? "2px dashed" : "3px solid"} ${item.color}`
+                : undefined
+            }}
+            aria-hidden="true"
+            role="presentation"
+          />
+        )}
         <span style={{ color: "#3A3A3A" }}>{item.label}</span>
       </div>
     ));

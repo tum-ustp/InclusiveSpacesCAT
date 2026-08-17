@@ -187,16 +187,9 @@ export default function Sidebar_Tooltip({ show, type, city, anchorRef, onClose, 
 }
 
 function contentFor(type, t, city) {
-  const munichMockupNotice =
-    city === "munich" ? (
-      <p className={sty["tooltip-text"]}>
-        {t("tooltip_munich_mockup_data")}
-      </p>
-    ) : null;
   const featureTooltip = (key) => (
     <div className={sty["tooltip-content"]}>
       <p className={sty["tooltip-text"]}>{t(key)}</p>
-      {munichMockupNotice}
     </div>
   );
 
@@ -213,11 +206,15 @@ function contentFor(type, t, city) {
   if (type.startsWith("layer:")) {
     const tp = type;
     const key = tp.slice(6);
-    const title = t(`tooltip_layer.${key}.title`, { defaultValue: key });
-    const desc = t(`tooltip_layer.${key}.desc`, {
+    const tooltipKey =
+      city === "munich" && key === "trafic_light_wms"
+        ? "munich_trafic_light_wms"
+        : key;
+    const title = t(`tooltip_layer.${tooltipKey}.title`, { defaultValue: key });
+    const desc = t(`tooltip_layer.${tooltipKey}.desc`, {
       defaultValue: `Information about ${key} layer.`,
     });
-    const source = t(`tooltip_layer.${key}.source`, {
+    const source = t(`tooltip_layer.${tooltipKey}.source`, {
       defaultValue: t("tooltip_data_source_generic", {
         defaultValue: "City / project data",
       }),
@@ -239,19 +236,44 @@ function contentFor(type, t, city) {
 
   // Data info tooltip
   if (type === "dataInfo") {
-    const cityLabel = t("tooltip_city_label_value", {
-      defaultValue: "City",
-    });
+    const isMunich = city === "munich";
+    const title = isMunich
+      ? t("tooltip_data_info_munich_title", {
+          defaultValue: t("tooltip_data_title", { defaultValue: "Data information" }),
+        })
+      : t("tooltip_data_title", { defaultValue: "Data information" });
+    const source = isMunich
+      ? t("tooltip_data_info_munich_source", {
+          defaultValue: t("tooltip_data_source_generic", {
+            defaultValue: "City / project data",
+          }),
+        })
+      : null;
+    const desc = isMunich
+      ? t("tooltip_data_info_munich_desc", {
+          defaultValue:
+            "The dataset provides locations of signal-controlled intersections in Munich. For the accessibility catchment calculation, a 20 m buffer around each traffic-light point was used to identify nearby street segments. These segments were then marked as affected by the traffic-light factor.",
+        })
+      : t("tooltip_data_desc", {
+          defaultValue:
+            "This tool uses street network and environmental data to estimate accessible areas for different walking comfort profiles.",
+        });
+
     return (
       <div className={sty["tooltip-content"]}>
         <div className={sty["tooltip-title"]}>
-          {t("tooltip_data_title", { defaultValue: "Data information" })}
+          {title}
         </div>
-        <div className={sty["tooltip-description"]}> 
-          {t("tooltip_data_desc", {
-            defaultValue:
-              "This tool uses street network and environmental data to estimate accessible areas for different walking comfort profiles.",
-          })}
+        {source && (
+          <div>
+            <b>
+              {t("tooltip_data_source_label", { defaultValue: "Source:" })}
+            </b>{" "}
+            {source}
+          </div>
+        )}
+        <div className={sty["tooltip-description"]}>
+          {desc}
         </div>
       </div>
     );
@@ -280,7 +302,6 @@ function contentFor(type, t, city) {
         <p className={sty["tooltip-text"]}>
           {t("tooltip_variable_title")}
         </p>
-        {munichMockupNotice}
       </div>
     );
   }

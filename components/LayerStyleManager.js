@@ -15,8 +15,9 @@ import { HAMBURG_FACILITY_POI_COLORS } from "./poiConfig";
 export const layerGroupMap = {
   tactile_guidance: ["tactile_points", "tactile_lines", "tactile_polygons"],
   munich_lighting: [
-    "muc_osm_lit_highways_visual",
-    "muc_street_lamps_visual"
+    "muc_lighting_unlit",
+    "muc_street_lamps_visual",
+    "muc_lighting_lit"
   ]
 };
 
@@ -45,19 +46,19 @@ export function getStyle(layer, feature) {
         fillOpacity: 0.8,
         stroke: false
       }; 
-    case "muc_osm_lit_highways_visual": {
-      const lighting = String(
-        feature?.properties?.lighting ?? feature?.properties?.lit ?? ""
-      ).toLowerCase();
-      const isLit = lighting === "lit" || lighting === "yes";
-
+    case "muc_lighting_lit":
       return {
-        color: isLit ? "#ffac29" : "#4b5563",
+        color: "#ffac29",
         weight: 2.5,
-        opacity: isLit ? 0.9 : 0.75,
-        dashArray: isLit ? undefined : "5,5"
+        opacity: 0.9
       };
-    }
+    case "muc_lighting_unlit":
+      return {
+        color: "#4b5563",
+        weight: 2.5,
+        opacity: 0.75,
+        dashArray: "5,5"
+      };
     case "tactile_points":
       return {
         radius: 5,
@@ -261,7 +262,7 @@ export function getStyle(layer, feature) {
   }
 }
 
-// import WMS layers from Geoportal Hamburg
+// import WMS layers from © Geoportal Hamburg
 export function NoiseWMSLayer() {
   const map = useMap();
   useEffect(() => {
@@ -294,22 +295,30 @@ export function TreeWMSLayer() {
   return null;
 }
 
-export function TraficLightWMSLayer() {
+export function TraficLightWMSLayer({ city = "hamburg" } = {}) {
   const map = useMap();
   useEffect(() => {
-    const layer = L.tileLayer.wms("https://geodienste.hamburg.de/HH_WMS_Lichtsignalanlagen", {
-      layers: "lichtsignalanlagen",
-      format: "image/png",
-      transparent: true,
-      version: "1.3.0",
-      attribution: "© Geoportal Hamburg"
-    });
+    const isMunich = city === "munich";
+    const layer = L.tileLayer.wms(
+      isMunich
+        ? "https://geoportal.muenchen.de/geoserver/mor_wfs/lsa_opendata/ows"
+        : "https://geodienste.hamburg.de/HH_WMS_Lichtsignalanlagen",
+      {
+        layers: isMunich ? "mor_wfs:lsa_opendata" : "lichtsignalanlagen",
+        format: "image/png",
+        transparent: true,
+        version: "1.3.0",
+        attribution: "© Geoportal Hamburg"
+      }
+    );
+    if (isMunich) {
+      layer.options.attribution = "© Geoportal München";
+    }
     layer.addTo(map);
     return () => map.removeLayer(layer);
-  }, [map]);
+  }, [map, city]);
   return null;
 }
-
 export function BlueInfWMSLayer() {
   const map = useMap();
   useEffect(() => {
@@ -399,4 +408,3 @@ export const wmsLayerComponents = {
   transport_station_wms: StationWMSLayer,
   pedestrian_flow_wms: PedestrianFlowWMSLayer
 };
-

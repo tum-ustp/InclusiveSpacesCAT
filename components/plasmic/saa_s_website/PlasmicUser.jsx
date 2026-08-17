@@ -267,6 +267,7 @@ function PlasmicUser__RenderFunc(props) {
               selectedLayers={selectedLayers}
               toggleLayer={toggleLayer}
               availableLayers={availableLayers}
+              selectedCity={selectedCity}
             />
             <MapComponent
               selectedCity={selectedCity}

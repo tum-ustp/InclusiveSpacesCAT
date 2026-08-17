@@ -1,4 +1,4 @@
-﻿{
+{
   "page_title_landing":"CAT – Home",
   "page_title_map":"CAT – Map",
   "nav_links": "Navigation bar",
@@ -383,7 +383,6 @@
   "tooltip_walking_speed_brisk": "A brisk walk (fast), such as when you’re in a hurry, can reach 6 km/h.",
   "tooltip_comfort_features_title": "Help for discomfort feature setting",
   "tooltip_variable_title": "Tick the comfort factors that matter to you and adjust how much they bother you with the sliders below.",
-  "tooltip_munich_mockup_data": "Preliminary mock-up data. These Munich discomfort-factor values are not final validated data yet.",
   "tooltip_noise":   "Is high traffic or environmental noise here likely to stress you and make you avoid walking?",
   "tooltip_light":   "Would insufficient or missing street lighting make this street feel unsafe to you after dark?",
   "tooltip_traffic": "Does crossing here without traffic lights feel dangerous, especially on busy roads?",
@@ -407,8 +406,11 @@
   
   "tooltip_default": "No details.",
   "tooltip_default_title": "Additional information",
-  "tooltip_data_title": "Data information", 
-  "tooltip_data_source_hh": "Mainly sourced from Geoportal Hamburg, OpenStreetMap, and the Technical University of Munich. For detailed information, please refer to the source indicated under each dataset below.",
+  "tooltip_data_title": "Data information",
+  "tooltip_data_info_munich_title": "Traffic Lights",
+  "tooltip_data_info_munich_source": "© Geoportal München, 2026",
+  "tooltip_data_info_munich_desc": "The dataset provides locations of signal-controlled intersections in Munich. For the accessibility catchment calculation, a 20 m buffer around each traffic-light point was used to identify nearby street segments. These segments were then marked as affected by the traffic-light factor.",
+  "tooltip_data_source_hh": "Mainly sourced from © Geoportal Hamburg, OpenStreetMap, and the Technical University of Munich. For detailed information, please refer to the source indicated under each dataset below.",
   "tooltip_data_source_pt": "Mainly sourced from the municipality of Penteli, OpenStreetMap, and the Technical University of Munich. For detailed information, please refer to the source indicated under each dataset below.",
   "tooltip_data_desc": "The map layers combine environmental, infrastructural, and accessibility-related data from open data source. They include information such as noise, temperature, light, slope, greenery, street infrastructure, and pedestrian flow, supporting comfort-based accessibility analysis.",
   "tooltip_layer_generic_desc": "This layer visualizes city features used for comfort-based accessibility insights.",
@@ -416,7 +418,7 @@
     "noise_wms": {
       "title": "Noise Map",
       "desc": "Day-evening-night noise levels from Hamburg Geoportal WMS.",
-      "source": "Geoportal Hamburg (HH_WMS_Strassenverkehr)"
+      "source": "© Geoportal Hamburg (HH_WMS_Strassenverkehr)"
     },
     "temp_summer": {
       "title": "Summer Thermal Comfort",
@@ -441,7 +443,12 @@
     "trafic_light_wms": {
       "title": "Traffic Lights",
       "desc": "The dataset contains the location, name, and node number of all traffic lights in the Hamburg city area (excluding the Hamburg Port Authority [HPA]). Signalized crossings/junctions, etc., which are defined as sub-nodes of the traffic lights, are not displayed as separate points.",
-      "source": "Geoportal Hamburg (Lichtsignalanlagen Hamburg)"
+      "source": "© Geoportal Hamburg (Lichtsignalanlagen Hamburg)"
+    },
+    "munich_trafic_light_wms": {
+      "title": "Traffic Lights",
+      "desc": "The dataset provides locations of signal-controlled intersections in Munich. For the accessibility catchment calculation, a 20 m buffer around each traffic-light point was used to identify nearby street segments. These segments were then marked as affected by the traffic-light factor.",
+      "source": "© Geoportal München, 2026"
     },
     "trafic_light": {
       "title": "Traffic Lights",
@@ -456,12 +463,12 @@
     "tree_wms": {
       "title": "Tree Planting Sites",
       "desc": "This dataset contains locations of tree planting sites categorized as planted trees, planned trees, and unassigned planting spots. The data originates from Hamburg’s official tree management system and is published via the Geoportal WMS service.",
-      "source": "Geoportal Hamburg (Pflanzstandorte)"
+      "source": "© Geoportal Hamburg (Pflanzstandorte)"
     },
     "green_infrastructure_wms": {
       "title": "Green Infrastructure",
       "desc": "Information about all types of green space - playgrounds, parks, general green spaces, hiking trails, allotment garden green spaces, permanent allotments, protective green spaces, sports fields and cemeteries.",
-      "source": "Geoportal Hamburg (Kataster der öffentlichen Grünanlagen)"
+      "source": "© Geoportal Hamburg (Kataster der öffentlichen Grünanlagen)"
     },
     "green_infrastructure": {
       "title": "Green Infrastructure",
@@ -471,12 +478,12 @@
     "blue_infrastructure_wms": {
       "title": "Blue Infrastructure (Water Features)",
       "desc": "This dataset includes hydrological and geomorphological features such as rivers, lakes, and other water-related landmarks relevant for geotourism and landscape interpretation.",
-      "source": "Geoportal Hamburg (Wasser und Wasserbau)"
+      "source": "© Geoportal Hamburg (Wasser und Wasserbau)"
     },
     "transport_station_wms": {
       "title": "Public Transport Stations",
       "desc": "This dataset is part of the Hamburg Metropolitan Region’s accessibility analysis (Erreichbarkeitsanalysen) and contains destinations and facilities relevant for mobility studies, including train stations, bus stops, schools, commercial centers, and supermarkets. The data supports regional accessibility and service coverage assessments.",
-      "source": "Geoportal Hamburg (Haltestellen)"
+      "source": "© Geoportal Hamburg (Haltestellen)"
     },
     "transport_station": {
       "title": "Public Transport Stations",
@@ -541,7 +548,7 @@
     "pedestrian_flow_wms": {
       "title": "Pedestrian Flow",
       "desc": "The data was calculated based on a pedestrian network derived from the Digital Landscape Model and various points of interest (POIs), such as public transportation stops, retail stores, and schools. Each POI was assigned a catchment area and a weighting from 0 to 15, with the highest number representing the greatest significance and the lowest numbers representing the least significance.",
-      "source": "Geoportal Hamburg (Bedeutungsräume für den Fußverkehr)"
+      "source": "© Geoportal Hamburg (Bedeutungsräume für den Fußverkehr)"
     },
     "pedestrian_flow": {
       "title": "Pedestrian Flow",
@@ -591,6 +598,8 @@
   "layertag_temp_winter_1": "Cold",
   "layertag_temp_winter_2": "Very Cold",
   "layertag_trafic_light": "Traffic Lights",
+  "layertag_munich_traffic_light_additional": "Traffic lights with additional equipment",
+  "layertag_munich_traffic_light_standard": "Traffic lights",
   "layertag_lighting_lit": "Lit streets",
   "layertag_lighting_unlit": "Unlit streets",
   "layertag_lighting_streetlamp": "Street lamps",

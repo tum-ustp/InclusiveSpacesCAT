@@ -113,6 +113,7 @@ export default function Sidebar({
             selectedLayers={selectedLayers}
             toggleLayer={toggleLayer}
             availableLayers={availableLayers}
+            city={city}
             isSearchZoom={isSearchZoom}
             setIsSearchZoom={setIsSearchZoom}
           />

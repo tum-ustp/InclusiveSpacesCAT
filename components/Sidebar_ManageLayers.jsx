@@ -3,7 +3,7 @@ import sty from "./Sidebar.module.css";
 import { useTranslation } from 'next-i18next'; 
 import Tooltip from "./Sidebar_Tooltip";
 
-function LayerCheckbox({ layerKey, label, checked, onToggle, t }) {
+function LayerCheckbox({ layerKey, label, checked, onToggle, t, city }) {
   const [showTooltip, setShowTooltip] = React.useState(false);
   const tooltipRef = React.useRef(null);
 
@@ -48,6 +48,7 @@ function LayerCheckbox({ layerKey, label, checked, onToggle, t }) {
       <Tooltip
         show={showTooltip}
         type={`layer:${layerKey}`}
+        city={city}
         anchorRef={tooltipRef}
         onClose={() => {
           setShowTooltip(false);
@@ -91,9 +92,7 @@ function Category({ name, label, isOpen, onToggle, children, sty }) {
   );
 }
 
-export default function MapLayers({ selectedLayers, toggleLayer, availableLayers }) {
-  const city = (typeof window !== "undefined" && (localStorage.getItem("selectedCity") || "hamburg")) || "hamburg"; 
-
+export default function MapLayers({ selectedLayers, toggleLayer, availableLayers, city = "hamburg" }) {
   const [showInfo, setShowInfo] = useState(false);
   const infoIconRef = React.useRef();
 
@@ -121,6 +120,7 @@ export default function MapLayers({ selectedLayers, toggleLayer, availableLayers
         checked={selectedLayers.includes(layer.key)}
         onToggle={() => toggleLayer(layer.key)}
         t={t}
+        city={city}
       />
     );
   };
@@ -156,6 +156,7 @@ export default function MapLayers({ selectedLayers, toggleLayer, availableLayers
         <Tooltip
           show={showInfo}
           type="dataInfo"
+          city={city}
           anchorRef={infoIconRef}
           onClose={() => {
             setShowInfo(false);

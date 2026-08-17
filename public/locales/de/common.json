@@ -1,4 +1,4 @@
-﻿{
+{
   "page_title_landing": "CAT – Startseite",
   "page_title_map": "CAT – Karte",
   "nav_links": "Navigationsleiste",
@@ -202,7 +202,7 @@
 
     "section5_intro": "CAT basiert sowohl auf Routing-Daten als auch auf stadtspezifischen Umweltinformationen. Um aussagekräftige Erreichbarkeitsergebnisse zu erzeugen, benötigt das Tool ein Wegenetz zur Berechnung erreichbarer Bereiche sowie zusätzliche Datensätze, die lokale Bedingungen in Bezug auf Komfort und Barrierefreiheit beschreiben. Diese Daten werden im Hintergrund vorbereitet und miteinander verknüpft, sodass Nutzerinnen und Nutzer sie über die CAT-Oberfläche erkunden können.",
     "section5_data_title": "Daten",
-    "section5_data_text": "CAT nutzt verschiedene Arten von Daten. Ein Straßen- und Wegenetz bildet die Grundlage für Routing und Erreichbarkeitsanalyse, während Stadtgrenzen und thematische Kartenebenen zusätzlichen lokalen Kontext liefern. Diese Ebenen können Informationen zu Lärm, Straßenbeleuchtung, Bäumen, taktiler Unterstützung, Hindernissen, Steigungen, Wegebelag oder nahegelegenen Einrichtungen enthalten. Das Routing-Netz basiert auf OpenStreetMap-Daten, während weitere stadtspezifische Geodaten aus offiziellen Quellen stammen können. Für Hamburg können solche Daten beispielsweise über das Geoportal Hamburg bezogen werden. Falls verfügbar, können einige Datensätze auch als WMS-Dienste zur Visualisierung in CAT genutzt werden. Datensätze, die für die eigentliche Erreichbarkeitsberechnung benötigt werden, werden separat im Hintergrund verarbeitet.",
+    "section5_data_text": "CAT nutzt verschiedene Arten von Daten. Ein Straßen- und Wegenetz bildet die Grundlage für Routing und Erreichbarkeitsanalyse, während Stadtgrenzen und thematische Kartenebenen zusätzlichen lokalen Kontext liefern. Diese Ebenen können Informationen zu Lärm, Straßenbeleuchtung, Bäumen, taktiler Unterstützung, Hindernissen, Steigungen, Wegebelag oder nahegelegenen Einrichtungen enthalten. Das Routing-Netz basiert auf OpenStreetMap-Daten, während weitere stadtspezifische Geodaten aus offiziellen Quellen stammen können. Für Hamburg können solche Daten beispielsweise über das © Geoportal Hamburg bezogen werden. Falls verfügbar, können einige Datensätze auch als WMS-Dienste zur Visualisierung in CAT genutzt werden. Datensätze, die für die eigentliche Erreichbarkeitsberechnung benötigt werden, werden separat im Hintergrund verarbeitet.",
     "section5_management_title": "Datenmanagement",
     "section5_management_text": "Bevor diese Datensätze in CAT verwendet werden können, müssen sie verarbeitet und mit dem Straßen- und Wegenetz verknüpft werden. Im Hintergrund werden Umweltinformationen in straßenbezogene Gewichtungen übersetzt, damit unterschiedliche Bedingungen das Erreichbarkeitsergebnis beeinflussen können. Punkt-, Linien- oder Flächendaten werden dazu beispielsweise nahegelegenen Straßenabschnitten zugeordnet, die anschließend danach markiert werden, ob ein bestimmter Faktor vorhanden oder relevant ist. Die verarbeiteten Routing-Daten und die zugehörigen Gewichtungsfelder werden in Supabase verwaltet, das die von CAT genutzte Datenstruktur unterstützt. Weitere technische Details zur Projektstruktur und zum Datenbank-Workflow finden sich im <github>GitHub-Repository</github> des Projekts.",
 
@@ -384,7 +384,6 @@
   "tooltip_walking_speed_brisk": "Ein zügiges Gehen (schnell), z. B. wenn man es eilig hat, kann 6 km/h erreichen.",
   "tooltip_comfort_features_title": "Hilfe zur Einstellung der Faktoren des Unbehagens",
   "tooltip_variable_title": "Wählen Sie die Komfortfaktoren aus, die für Sie wichtig sind, und passen Sie mit den Schiebereglern unten an, wie sehr sie Sie stören.",
-  "tooltip_munich_mockup_data": "Vorläufige Mock-up-Daten. Diese Werte der Münchner Unbehagensfaktoren sind noch keine final validierten Daten.",
   "tooltip_noise":   "Führt hoher Verkehrs- oder Umgebungslärm dazu, dass du gestresst bist und diesen Weg meidest?",
   "tooltip_light":   "Fühlt sich die Straße bei unzureichender oder fehlender Beleuchtung nach Einbruch der Dunkelheit unsicher an?",
   "tooltip_traffic": "Empfindest du das Überqueren ohne Ampel hier als gefährlich, besonders bei stark befahrenen Straßen?",
@@ -408,16 +407,19 @@
   
   "tooltip_default": "Keine Details.",
   "tooltip_default_title": "Zusätzliche Informationen",
-  "tooltip_data_title": "Dateninformationen", 
-  "tooltip_data_source_hh": "Hauptsächlich aus dem Geoportal Hamburg, OpenStreetMap und der Technischen Universität München. Weitere Details finden Sie in der jeweiligen Quellenangabe unter jedem Datensatz unten.",
+  "tooltip_data_title": "Dateninformationen",
+  "tooltip_data_info_munich_title": "Lichtsignalanlagen",
+  "tooltip_data_info_munich_source": "© Geoportal München, 2026",
+  "tooltip_data_info_munich_desc": "Der Datensatz enthält die Standorte signalgeregelter Kreuzungen in München. Für die Berechnung des Erreichbarkeitsgebiets wurde um jeden Ampelpunkt ein Puffer von 20 m verwendet, um nahegelegene Straßenabschnitte zu identifizieren. Diese Straßenabschnitte wurden anschließend als vom Ampelfaktor beeinflusst markiert.",
+  "tooltip_data_source_hh": "Hauptsächlich aus dem © Geoportal Hamburg, OpenStreetMap und der Technischen Universität München. Weitere Details finden Sie in der jeweiligen Quellenangabe unter jedem Datensatz unten.",
   "tooltip_data_source_pt": "Hauptsächlich aus den Daten der Gemeinde Penteli, OpenStreetMap und der Technischen Universität München. Weitere Details finden Sie in der jeweiligen Quellenangabe unter jedem Datensatz unten.",
   "tooltip_data_desc": "Die Kartendaten kombinieren Umwelt-, Infrastruktur- und Barrierefreiheitsinformationen aus offenen Datenquellen. Sie umfassen Themen wie Lärm, Temperatur, Licht, Steigung, Grünflächen, Straßeninfrastruktur und Fußgängerverkehr und unterstützen Analysen der komfortbasierten Erreichbarkeit.",
   "tooltip_layer_generic_desc": "Diese Ebene visualisiert städtische Merkmale, die für Analysen der komfortbasierten Erreichbarkeit verwendet werden.",
   "tooltip_layer": {
     "noise_wms": {
       "title": "Lärmkarten",
-      "desc": "Tag-Abend-Nacht-Lärmpegel aus dem Geoportal Hamburg WMS.",
-      "source": "Geoportal Hamburg (HH_WMS_Strassenverkehr)"
+      "desc": "Tag-Abend-Nacht-Lärmpegel aus dem © Geoportal Hamburg WMS.",
+      "source": "© Geoportal Hamburg (HH_WMS_Strassenverkehr)"
     },
     "temp_summer": {
       "title": "Sommerliche thermische Behaglichkeit",
@@ -442,7 +444,12 @@
     "trafic_light_wms": {
       "title": "Ampeln",
       "desc": "Der Datensatz enthält Standort, Name und Knotennummer aller Ampeln im Hamburger Stadtgebiet (ohne Hafenbehörde HPA). Signalisierten Kreuzungen oder Unterknoten werden nicht separat angezeigt.",
-      "source": "Geoportal Hamburg (Lichtsignalanlagen Hamburg)"
+      "source": "© Geoportal Hamburg (Lichtsignalanlagen Hamburg)"
+    },
+    "munich_trafic_light_wms": {
+      "title": "Ampeln",
+      "desc": "Der Datensatz enthält die Standorte signalgeregelter Kreuzungen in München. Für die Berechnung des Erreichbarkeitsgebiets wurde um jeden Ampelpunkt ein Puffer von 20 m verwendet, um nahegelegene Straßenabschnitte zu identifizieren. Diese Straßenabschnitte wurden anschließend als vom Ampelfaktor beeinflusst markiert.",
+      "source": "© Geoportal München, 2026"
     },
     "trafic_light": {
       "title": "Ampeln",
@@ -457,12 +464,12 @@
     "tree_wms": {
       "title": "Baumpflanzstandorte",
       "desc": "Dieser Datensatz enthält Standorte von Baumpflanzflächen, kategorisiert als gepflanzt, geplant oder nicht zugewiesen. Die Daten stammen aus dem offiziellen Baumverwaltungssystem Hamburgs und werden über den Geoportal-WMS-Dienst veröffentlicht.",
-      "source": "Geoportal Hamburg (Pflanzstandorte)"
+      "source": "© Geoportal Hamburg (Pflanzstandorte)"
     },
     "green_infrastructure_wms": {
       "title": "Grüne Infrastruktur",
       "desc": "Informationen über verschiedene Grünflächenarten – Spielplätze, Parks, allgemeine Grünflächen, Wanderwege, Kleingartenanlagen, Schutzgrün, Sportflächen und Friedhöfe.",
-      "source": "Geoportal Hamburg (Kataster der öffentlichen Grünanlagen)"
+      "source": "© Geoportal Hamburg (Kataster der öffentlichen Grünanlagen)"
     },
     "green_infrastructure": {
       "title": "Grüne Infrastruktur",
@@ -472,12 +479,12 @@
     "blue_infrastructure_wms": {
       "title": "Blaue Infrastruktur (Wasserflächen)",
       "desc": "Dieser Datensatz enthält hydrologische und geomorphologische Merkmale wie Flüsse, Seen und wasserbezogene Landschaftselemente, die für den Geotourismus und die Landschaftsinterpretation relevant sind.",
-      "source": "Geoportal Hamburg (Wasser und Wasserbau)"
+      "source": "© Geoportal Hamburg (Wasser und Wasserbau)"
     },
     "transport_station_wms": {
       "title": "Öffentliche Verkehrsstationen",
       "desc": "Dieser Datensatz ist Teil der Erreichbarkeitsanalysen der Metropolregion Hamburg und enthält Ziele und Einrichtungen, die für Mobilitätsstudien relevant sind, darunter Bahnhöfe, Haltestellen, Schulen, Einkaufszentren und Supermärkte. Die Daten unterstützen Analysen zur regionalen Erreichbarkeit und Versorgungsabdeckung.",
-      "source": "Geoportal Hamburg (Haltestellen)"
+      "source": "© Geoportal Hamburg (Haltestellen)"
     },
     "transport_station": {
       "title": "Öffentliche Bushaltestellen",
@@ -542,7 +549,7 @@
     "pedestrian_flow_wms": {
       "title": "Fußgängerverkehr – Bedeutungsräume",
       "desc": "Die Daten wurden auf Basis eines Fußwegenetz aus dem Digitalen Landschaftsmodell und verschiedenen Interessensorten (POI) wie ÖPNV-Haltestellen, Einzelhandel oder Schulen berechnet. Jeder POI erhielt einen Einflussbereich und eine Gewichtung von 0 bis 15, wobei die höchste Zahl die größte Bedeutung darstellt, die niedrigsten eine geringe Bedeutung.",
-      "source": "Geoportal Hamburg (Bedeutungsräume für den Fußverkehr)"
+      "source": "© Geoportal Hamburg (Bedeutungsräume für den Fußverkehr)"
     },
     "pedestrian_flow": {
       "title": "Fußgängerverkehr",
@@ -592,6 +599,8 @@
   "layertag_temp_winter_1": "Kalt",
   "layertag_temp_winter_2": "Sehr kalt", 
   "layertag_trafic_light": "Ampeln",
+  "layertag_munich_traffic_light_additional": "Ampeln mit Zusatzeinrichtung",
+  "layertag_munich_traffic_light_standard": "Ampeln",
   "layertag_lighting_lit": "Beleuchtete Straßen",
   "layertag_lighting_unlit": "Unbeleuchtete Straßen",
   "layertag_lighting_streetlamp": "Straßenlaternen",
