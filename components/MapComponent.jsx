@@ -241,7 +241,7 @@ const MapComponent = ({
             (poiLayer) => poiLayer !== EXCLUDED_HAMBURG_FACILITY_POI
           );
         }
-        return layerGroupMap[layer] || [layer]; // Expand the tactile_guidance and other grouped layers
+        return layerGroupMap[layer] || [layer]; // Expand tactile_guidance and other grouped layers
       });
 
       const expandedLayerSet = new Set(expandedLayers);

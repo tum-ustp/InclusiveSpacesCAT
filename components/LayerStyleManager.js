@@ -64,20 +64,20 @@ export function getStyle(layer, feature) {
         radius: 5,
         fillColor: "#be609a",
         fillOpacity: 0.8,
-        stroke: false     
+        stroke: false
       };
 
     case "tactile_lines":
       return {
-        color: "#be609a", 
+        color: "#be609a",
         weight: 2,
         opacity: 0.9
       };
 
     case "tactile_polygons":
       return {
-        color: "#be609a",      
-        fillColor: "#be609a",   
+        color: "#be609a",
+        fillColor: "#be609a",
         fillOpacity: 0.6,
         weight: 1,
         opacity: 0.6
