@@ -18,7 +18,7 @@ test("collect, unary union, and server buffer SQL fragments remain distinct", as
 
   assert.match(src, /ST_Collect\(\$\{geomColumn\}\)/);
   assert.match(src, /ST_LineMerge\(ST_UnaryUnion\(ST_Collect\(\$\{geomColumn\}\)\)\)/);
-  assert.match(src, /ST_UnaryUnion\(\s*ST_Buffer\(\s*ST_Collect\(\$\{geomColumn\}\),\s*\$24::float\s*\)\s*\)/s);
+  assert.match(src, /ST_UnaryUnion\(\s*ST_Buffer\(\s*ST_Collect\(\$\{geomColumn\}\),\s*\$4::float\s*\)\s*\)/s);
 });
 
 test("server timing exports the requested server-side breakdown", async () => {

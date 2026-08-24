@@ -197,7 +197,7 @@ export const getAccessibilityTimingRow = (phaseLabel, requestTiming, turfTiming,
 
 export const getContourSettings = (featureCount) => {
   if (featureCount > 4000) {
-    return { tolerance: 0.00014, highQuality: false, steps: 12 };
+    return { tolerance: 0.0002, highQuality: false, steps: 8 };
   }
   if (featureCount > 1500) {
     return { tolerance: 0.0001, highQuality: false, steps: 14 };

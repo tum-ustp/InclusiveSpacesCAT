@@ -121,7 +121,15 @@ export const useCatchmentArea = ({
   }, [clearTrigger, onClearHandled]);
 
   // Fetch accessibility data from the backend
-  const fetchAccessibilityFromBackend = async (lat, lon, time, speed, variableSettings, signal, phaseLabel) => {
+  const fetchAccessibilityFromBackend = async ({
+    lat,
+    lon,
+    time,
+    speed,
+    variableSettings,
+    signal,
+    mode = "default",
+  }) => {
     try {
       const selected = enabledVariables || [];
 
@@ -152,11 +160,13 @@ export const useCatchmentArea = ({
       params.append("n", Math.max(1, selected.length));
       params.append("city", selectedCity);
       params.append("geometry", ACCESSIBILITY_GEOMETRY_MODE);
+      params.append("mode", mode);
+      params.append("geometryPipeline", mode === "default" ? "collect" : "unaryUnion");
 
-      const runId = `${phaseLabel}-${Date.now()}`;
+      const runId = `${mode}-${Date.now()}`;
       const startMark = `accessibility-fetch-start-${runId}`;
       const endMark = `accessibility-fetch-end-${runId}`;
-      const measureName = `accessibility:fetch:${phaseLabel}`;
+      const measureName = `accessibility:fetch:${mode}`;
       markPerformance(startMark);
       const res = await fetch(`/api/accessibility?${params}`, { signal });
       if (!res.ok) throw new Error("API call failed");
@@ -263,15 +273,15 @@ export const useCatchmentArea = ({
             temperatureSummer: 1, temperatureWinter: 1
           };
 
-          const defaultRes = await fetchAccessibilityFromBackend(
+          const defaultRes = await fetchAccessibilityFromBackend({
             lat,
             lon,
-            walkingTime,
-            walkingSpeed,
-            defaultVars,
-            controller.signal,
-            "default"
-          );
+            time: walkingTime,
+            speed: walkingSpeed,
+            variableSettings: defaultVars,
+            signal: controller.signal,
+            mode: "default",
+          });
           if (!defaultRes || !defaultRes.roads) {
             alert(t("err_api_failed_try_again"));
             setComputeAccessibility(false);
@@ -335,15 +345,15 @@ export const useCatchmentArea = ({
 
         // --------- Step 2: Weighted Result (with comfort features) ---------
         if (enabledVariables.length > 0) {
-          const weightedRes = await fetchAccessibilityFromBackend(
+          const weightedRes = await fetchAccessibilityFromBackend({
             lat,
             lon,
-            walkingTime,
-            walkingSpeed,
-            layerValues,
-            controller.signal,
-            "weighted"
-          );
+            time: walkingTime,
+            speed: walkingSpeed,
+            variableSettings: layerValues,
+            signal: controller.signal,
+            mode: "weighted",
+          });
           if (!weightedRes || !weightedRes.roads) {
             alert(t("err_api_failed_try_again"));
             return;

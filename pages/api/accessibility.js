@@ -1,6 +1,7 @@
-import { Pool } from "pg";
+import pg from "pg";
 import { performance } from "node:perf_hooks";
 
+const { Pool } = pg;
 let pool;
 
 const getPool = () => {
@@ -67,7 +68,7 @@ export const buildFinalRoadsGeometrySql = (pipeline, geomColumn) => {
       ST_UnaryUnion(
         ST_Buffer(
           ST_Collect(${geomColumn}),
-          $24::float
+          $4::float
         )
       )
     `;
@@ -80,82 +81,156 @@ export const buildFinalRoadsGeometrySql = (pipeline, geomColumn) => {
   return `ST_LineMerge(ST_UnaryUnion(ST_Collect(${geomColumn})))`;
 };
 
+const buildWeightedCostSql = (weights, tableAlias = "") => {
+  const columnPrefix = tableAlias ? `${tableAlias}.` : "";
+
+  return `
+  ${columnPrefix}cost / GREATEST(
+    LEAST(
+      CASE WHEN ${columnPrefix}noise_weight = 1 THEN ${weights.noise} ELSE 1 END,
+      CASE WHEN ${columnPrefix}light_weight = 0 THEN ${weights.light} ELSE 1 END,
+      CASE WHEN ${columnPrefix}trafficlight_weight = 1 THEN ${weights.trafficLight} ELSE 1 END,
+      CASE WHEN ${columnPrefix}tactile_weight = 0 THEN ${weights.tactile} ELSE 1 END,
+      CASE WHEN ${columnPrefix}tree_weight = 0 THEN ${weights.tree} ELSE 1 END,
+      CASE WHEN ${columnPrefix}temp_weight_s = 1 THEN ${weights.temperatureSummer} ELSE 1 END,
+      CASE WHEN ${columnPrefix}temp_weight_w = 1 THEN ${weights.temperatureWinter} ELSE 1 END,
+      CASE WHEN ${columnPrefix}blue_weight = 0 THEN ${weights.blueinf} ELSE 1 END,
+      CASE WHEN ${columnPrefix}green_weight = 0 THEN ${weights.greeninf} ELSE 1 END,
+      CASE WHEN ${columnPrefix}station_weight = 0 THEN ${weights.station} ELSE 1 END,
+      CASE WHEN ${columnPrefix}wc_d_weight = 0 THEN ${weights.wcDisabled} ELSE 1 END,
+      CASE WHEN ${columnPrefix}path_width_weight = 1 THEN ${weights.narrowRoads} ELSE 1 END,
+      CASE WHEN ${columnPrefix}stair_weight = 1 THEN ${weights.stair} ELSE 1 END,
+      CASE WHEN ${columnPrefix}obstacle_weight = 1 THEN ${weights.obstacle} ELSE 1 END,
+      CASE WHEN ${columnPrefix}slope_weight = 1 THEN ${weights.slope} ELSE 1 END,
+      CASE WHEN ${columnPrefix}uneven_surfaces_weight = 1 THEN ${weights.unevenSurface} ELSE 1 END,
+      CASE WHEN ${columnPrefix}poor_pavement_weight = 1 THEN ${weights.poorPavement} ELSE 1 END,
+      CASE WHEN ${columnPrefix}kerbs_h_weight = 1 THEN ${weights.kerbsHigh} ELSE 1 END,
+      CASE WHEN ${columnPrefix}facilities_weight = 0 THEN ${weights.facility} ELSE 1 END,
+      CASE WHEN ${columnPrefix}pedestrian_flow_weight = 1 THEN ${weights.pedestrianFlow} ELSE 1 END
+    ),
+    1e-6
+  )
+`;
+};
+
 export const buildAccessibilityGeometryQuery = ({
   cityConfig,
   geometryPipeline,
+  mode = "default",
+  weights = {},
 }) => {
-  const collectedGeometrySql = buildFinalRoadsGeometrySql(geometryPipeline, "the_geom");
+  const geomColumn = "road_geom";
+  const collectedGeometrySql = buildFinalRoadsGeometrySql(geometryPipeline, geomColumn);
+  const edgeSql =
+    mode === "weighted"
+      ? `SELECT gid AS id, source, target,
+          ${buildWeightedCostSql(weights)} AS cost
+        FROM ${cityConfig.waysTable}`
+      : `SELECT gid AS id, source, target, cost
+        FROM ${cityConfig.waysTable}`;
+
+  const adjustedCostSql =
+    mode === "weighted"
+      ? buildWeightedCostSql(weights, "c")
+      : "c.cost";
 
   return `
         WITH dd AS (
           SELECT *
           FROM pgr_drivingDistance(
-            'SELECT gid AS id, source, target,
-              cost / GREATEST(
-                LEAST(
-                  CASE WHEN noise_weight = 1 THEN ' || $3::float || ' ELSE 1 END,
-                  CASE WHEN light_weight = 0 THEN ' || $4::float || ' ELSE 1 END,
-                  CASE WHEN trafficlight_weight = 1 THEN ' || $5::float || ' ELSE 1 END,
-                  CASE WHEN tactile_weight = 0 THEN ' || $6::float || ' ELSE 1 END,
-                  CASE WHEN tree_weight = 0 THEN ' || $7::float || ' ELSE 1 END,
-                  CASE WHEN temp_weight_s = 1 THEN ' || $8::float || ' ELSE 1 END,
-                  CASE WHEN temp_weight_w = 1 THEN ' || $9::float || ' ELSE 1 END,
-                  CASE WHEN blue_weight = 0 THEN ' || $10::float || ' ELSE 1 END,
-                  CASE WHEN green_weight = 0 THEN ' || $11::float || ' ELSE 1 END,
-                  CASE WHEN station_weight = 0 THEN ' || $12::float || ' ELSE 1 END,
-                  CASE WHEN wc_d_weight = 0 THEN ' || $13::float || ' ELSE 1 END,
-                  CASE WHEN path_width_weight = 1 THEN ' || $14::float || ' ELSE 1 END,
-                  CASE WHEN stair_weight = 1 THEN ' || $15::float || ' ELSE 1 END,
-                  CASE WHEN obstacle_weight = 1 THEN ' || $16::float || ' ELSE 1 END,
-                  CASE WHEN slope_weight = 1 THEN ' || $17::float || ' ELSE 1 END,
-                  CASE WHEN uneven_surfaces_weight = 1 THEN ' || $18::float || ' ELSE 1 END,
-                  CASE WHEN poor_pavement_weight = 1 THEN ' || $19::float || ' ELSE 1 END,
-                  CASE WHEN kerbs_h_weight = 1 THEN ' || $20::float || ' ELSE 1 END,
-                  CASE WHEN facilities_weight = 0 THEN ' || $21::float || ' ELSE 1 END,
-                  CASE WHEN pedestrian_flow_weight = 1 THEN ' || $22::float || ' ELSE 1 END
-                ),
-                1e-6
-              ) AS cost
-            FROM ${cityConfig.waysTable}',
+            '${edgeSql.replace(/'/g, "''")}',
             $1::integer,
             $2::float,
             false::boolean
           )
         ),
+        reachable_nodes AS (
+          SELECT
+            node,
+            MIN(agg_cost) AS agg_cost
+          FROM dd
+          GROUP BY node
+        ),
+        candidate_roads AS MATERIALIZED (
+          SELECT
+            w.*,
+            w.${cityConfig.waysGeomColumn} AS road_geom,
+            ns.agg_cost AS source_agg_cost,
+            nt.agg_cost AS target_agg_cost
+          FROM ${cityConfig.waysTable} w
+          LEFT JOIN reachable_nodes ns ON ns.node = w.source
+          LEFT JOIN reachable_nodes nt ON nt.node = w.target
+          WHERE ns.node IS NOT NULL OR nt.node IS NOT NULL
+        ),
+        scored_roads AS (
+          SELECT
+            c.*,
+            ${adjustedCostSql} AS adjusted_cost
+          FROM candidate_roads c
+        ),
         final_roads AS (
           SELECT
-            w.${cityConfig.edgeIdColumn} AS gid,
-            w.${cityConfig.waysGeomColumn} AS the_geom
-          FROM ${cityConfig.waysTable} w
-          WHERE w.${cityConfig.edgeIdColumn} IN (
-            SELECT edge
-            FROM dd
-            WHERE edge IS NOT NULL AND edge <> -1
-          )
+            r.gid,
+            r.source,
+            r.target,
+            r.road_geom,
+            GREATEST(
+              CASE
+                WHEN r.source_agg_cost IS NOT NULL
+                  AND r.source_agg_cost + r.adjusted_cost <= $2::float
+                  THEN r.source_agg_cost + r.adjusted_cost
+                ELSE 0
+              END,
+              CASE
+                WHEN r.target_agg_cost IS NOT NULL
+                  AND r.target_agg_cost + r.adjusted_cost <= $2::float
+                  THEN r.target_agg_cost + r.adjusted_cost
+                ELSE 0
+              END
+            ) AS agg_cost
+          FROM scored_roads r
+          WHERE
+            (
+              r.source_agg_cost IS NOT NULL
+              AND r.source_agg_cost + r.adjusted_cost <= $2::float
+            )
+            OR
+            (
+              r.target_agg_cost IS NOT NULL
+              AND r.target_agg_cost + r.adjusted_cost <= $2::float
+            )
+        ),
+        selected_roads AS (
+          SELECT
+            gid,
+            road_geom,
+            agg_cost
+          FROM final_roads
         ),
         raw_payload_stats AS (
           SELECT
             COUNT(*)::int AS feature_count,
-            COALESCE(SUM(ST_NPoints(the_geom)), 0)::bigint AS total_points
-          FROM final_roads
+            COALESCE(SUM(ST_NPoints(road_geom)), 0)::bigint AS total_points
+          FROM selected_roads
         ),
         collected_network AS (
-          SELECT ${collectedGeometrySql} AS geom
-          FROM final_roads
+          SELECT
+            ${collectedGeometrySql} AS geom
+          FROM selected_roads
         ),
         dumped_output AS (
           SELECT
             (ST_Dump(
               ST_Multi(
                 CASE
-                  WHEN $23::text = 'simplified'
-                    THEN ST_SimplifyPreserveTopology(geom, $24::float)
+                  WHEN $3::text = 'simplified'
+                    THEN ST_SimplifyPreserveTopology(geom, $4::float)
                   ELSE geom
                 END
               )
             )).geom AS geom
           FROM collected_network
-          WHERE geom IS NOT NULL
+          WHERE geom IS NOT NULL AND NOT ST_IsEmpty(geom)
         ),
         geometry_for_output AS (
           SELECT
@@ -203,6 +278,7 @@ export default async function handler(req, res) {
   const cityConfig = CITY_CONFIG[cityId] || CITY_CONFIG.hamburg;
   const geometryMode = geometry === "simplified" ? "simplified" : "full";
   const geometryPipeline = req.query.geometryPipeline || GEOMETRY_PIPELINES.unaryUnion;
+  const mode = req.query.mode === "weighted" ? "weighted" : "default";
 
   if (!lat || !lon) {
     return res.status(400).json({ error: "Missing lat/lon" });
@@ -257,30 +333,33 @@ export default async function handler(req, res) {
       buildAccessibilityGeometryQuery({
         cityConfig,
         geometryPipeline,
+        mode,
+        weights: {
+          noise: noiseVariable,
+          light: lightVariable,
+          trafficLight: trafficLightVariable,
+          tactile: tactileVariable,
+          tree: treeVariable,
+          temperatureSummer: temperatureSummerVariable,
+          temperatureWinter: temperatureWinterVariable,
+          blueinf: blueinfVariable,
+          greeninf: greeninfVariable,
+          station: stationVariable,
+          wcDisabled: wcDisabledVariable,
+          narrowRoads: narrowRoadsVariable,
+          stair: stairVariable,
+          obstacle: obstacleVariable,
+          slope: slopeVariable,
+          unevenSurface: unevenSurfaceVariable,
+          poorPavement: poorPavementVariable,
+          kerbsHigh: kerbsHighVariable,
+          facility: facilityVariable,
+          pedestrianFlow: pedestrianFlowVariable,
+        },
       }),
       [
         startVid,
         maxDistance,
-        noiseVariable,
-        lightVariable,
-        trafficLightVariable,
-        tactileVariable,
-        treeVariable,
-        temperatureSummerVariable,
-        temperatureWinterVariable,
-        blueinfVariable,
-        greeninfVariable,
-        stationVariable,
-        wcDisabledVariable,
-        narrowRoadsVariable,
-        stairVariable,
-        obstacleVariable,
-        slopeVariable,
-        unevenSurfaceVariable,
-        poorPavementVariable,
-        kerbsHighVariable,
-        facilityVariable,
-        pedestrianFlowVariable,
         geometryMode,
         cityConfig.simplifyTolerance,
       ]
