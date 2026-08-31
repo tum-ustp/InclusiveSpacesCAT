@@ -18,6 +18,11 @@
   "download_screenshot": "Screenshot des Einzugsgebiets herunterladen",
   "download_screenshot_preparing": "Screenshot wird vorbereitet...",
   "sr_screenshot_saved": "Screenshot des Einzugsgebiets gespeichert.",
+  "download_geojson_archive": "GeoJSON-Daten herunterladen",
+  "download_geojson_archive_preparing": "GeoJSON wird vorbereitet...",
+  "sr_geojson_archive_saved": "GeoJSON-Archiv gespeichert.",
+  "alert_geojson_archive_failed": "Das GeoJSON-Archiv konnte nicht gespeichert werden. Bitte versuchen Sie es erneut.",
+  "alert_no_geojson_to_download": "Es sind keine GeoJSON-Daten zum Herunterladen verfuegbar.",
 
   "header_tool_instruction": "Werkzeuganleitung",
   "header_select_city": "Stadt auswählen",

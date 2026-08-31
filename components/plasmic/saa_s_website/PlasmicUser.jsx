@@ -63,8 +63,11 @@ function PlasmicUser__RenderFunc(props) {
   const [isSearchZoom, setIsSearchZoom] = React.useState(false);
   const [canDownloadScreenshot, setCanDownloadScreenshot] = React.useState(false);
   const [isDownloadingScreenshot, setIsDownloadingScreenshot] = React.useState(false);
+  const [canDownloadGeoJson, setCanDownloadGeoJson] = React.useState(false);
+  const [isDownloadingGeoJson, setIsDownloadingGeoJson] = React.useState(false);
   const [canOpenSurvey, setCanOpenSurvey] = React.useState(false);
   const screenshotHandlerRef = React.useRef(null);
+  const geoJsonDownloadHandlerRef = React.useRef(null);
   const surveyOpenHandlerRef = React.useRef(null);
  
   const [showHelp, setShowHelp] = React.useState(false);
@@ -190,6 +193,16 @@ function PlasmicUser__RenderFunc(props) {
     }
   }, []);
 
+  const handleDownloadGeoJson = React.useCallback(async () => {
+    if (!geoJsonDownloadHandlerRef.current) return;
+    setIsDownloadingGeoJson(true);
+    try {
+      await geoJsonDownloadHandlerRef.current();
+    } finally {
+      setIsDownloadingGeoJson(false);
+    }
+  }, []);
+
   const handleOpenSurvey = React.useCallback(() => {
     surveyOpenHandlerRef.current?.();
   }, []);
@@ -262,6 +275,9 @@ function PlasmicUser__RenderFunc(props) {
               onDownloadScreenshot={handleDownloadScreenshot}
               canDownloadScreenshot={canDownloadScreenshot}
               isDownloadingScreenshot={isDownloadingScreenshot}
+              onDownloadGeoJson={handleDownloadGeoJson}
+              canDownloadGeoJson={canDownloadGeoJson}
+              isDownloadingGeoJson={isDownloadingGeoJson}
             />            
             <LayerTagBar
               selectedLayers={selectedLayers}
@@ -296,6 +312,10 @@ function PlasmicUser__RenderFunc(props) {
                 screenshotHandlerRef.current = handler;
               }}
               onScreenshotAvailabilityChange={setCanDownloadScreenshot}
+              onGeoJsonDownloadReady={(handler) => {
+                geoJsonDownloadHandlerRef.current = handler;
+              }}
+              onGeoJsonDownloadAvailabilityChange={setCanDownloadGeoJson}
               onSurveyOpenReady={(handler) => {
                 surveyOpenHandlerRef.current = handler;
               }}

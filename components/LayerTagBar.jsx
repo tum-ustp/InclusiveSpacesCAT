@@ -94,7 +94,6 @@ export default function LayerTagBar({
 
   const poiLegendLabelByKey = {
     poi_hh_gastronomy: t("leg_poi_gastronomy"),
-    poi_hh_haltstelle: t("leg_poi_haltstelle"),
     poi_hh_health: t("leg_poi_health"),
     poi_hh_kita_schule: t("leg_poi_education"),
     poi_hh_uni_fh: t("leg_poi_education"),

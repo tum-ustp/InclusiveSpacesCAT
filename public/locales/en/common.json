@@ -18,6 +18,11 @@
   "download_screenshot": "Download catchment area screenshot",
   "download_screenshot_preparing": "Preparing screenshot...",
   "sr_screenshot_saved": "Catchment area screenshot saved.",
+  "download_geojson_archive": "Download GeoJSON data",
+  "download_geojson_archive_preparing": "Preparing GeoJSON...",
+  "sr_geojson_archive_saved": "GeoJSON archive saved.",
+  "alert_geojson_archive_failed": "The GeoJSON archive could not be saved. Please try again.",
+  "alert_no_geojson_to_download": "No GeoJSON data is available to download.",
 
   "header_tool_instruction": "Tool Instruction",
   "header_select_city": "Select City",

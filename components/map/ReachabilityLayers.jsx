@@ -1,8 +1,5 @@
 import Legend from "../Legend";
-import { getStyle, isWmsLayer, wmsLayerComponents } from "../LayerStyleManager";
-import { HAMBURG_FACILITY_POI_LAYERS } from "../poiConfig";
-
-const EXCLUDED_HAMBURG_FACILITY_POI = "poi_hh_haltstelle";
+import { getStyle, isWmsLayer, layerGroupMap, wmsLayerComponents } from "../LayerStyleManager";
 
 const ReachabilityLayers = ({
   MapModule,
@@ -20,6 +17,9 @@ const ReachabilityLayers = ({
   t,
 }) => {
   const { GeoJSON, Tooltip } = MapModule;
+  const visibleGeoJsonLayerKeys = new Set(
+    selectedLayers.flatMap((layer) => layerGroupMap[layer] || [layer])
+  );
 
   return (
     <>
@@ -56,15 +56,7 @@ const ReachabilityLayers = ({
 
       {/* Render Geojson Layers based on selectedLayers*/}
       {Object.entries(geoJsonData).map(([layer, data]) => {
-        if (selectedCity === "hamburg" && layer === EXCLUDED_HAMBURG_FACILITY_POI) {
-          return null;
-        }
-        const isPoiLayer = layer.startsWith("poi_");
-        const isHamburgFacilityPoiVisible =
-          selectedCity === "hamburg" &&
-          selectedLayers.includes("facility_hh") &&
-          HAMBURG_FACILITY_POI_LAYERS.includes(layer);
-        if (isPoiLayer && !selectedLayers.includes(layer) && !isHamburgFacilityPoiVisible) {
+        if (!visibleGeoJsonLayerKeys.has(layer)) {
           return null;
         }
         return (

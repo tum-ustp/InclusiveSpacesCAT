@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import * as turf from "@turf/turf";
-import { HAMBURG_FACILITY_POI_LAYERS } from "../poiConfig";
+import { layerGroupMap } from "../LayerStyleManager";
 import {
   markPerformance,
   measurePerformance,
@@ -10,7 +10,6 @@ import {
   getContourSettings,
 } from "./performance";
 
-const EXCLUDED_HAMBURG_FACILITY_POI = "poi_hh_haltstelle";
 const ACCESSIBILITY_GEOMETRY_MODE = "simplified";
 
 // check if the generated reachability area is valid GeoJSON
@@ -26,9 +25,7 @@ const colorPool = [
 
 // POI/amenities summary in catchment area
 const POI_LAYER_CONFIG = {
-  hamburg: HAMBURG_FACILITY_POI_LAYERS.filter(
-    (poiLayer) => poiLayer !== EXCLUDED_HAMBURG_FACILITY_POI
-  ),
+  hamburg: layerGroupMap.facility_hh || [],
   penteli: [
     "poi_pt_education",
     "poi_pt_gastronomy",

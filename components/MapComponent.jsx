@@ -4,7 +4,6 @@ import "leaflet/dist/leaflet.css";
 import proj4 from "proj4"; 
 import sty from './MapComponent.module.css'; 
 import {isWmsLayer, buildLayerTypeMap, layerGroupMap} from "./LayerStyleManager";
-import { HAMBURG_FACILITY_POI_LAYERS } from "./poiConfig";
 import { useTranslation } from "next-i18next";
 import SurveyInvite from "./map/surveyInvite";
 import ReachabilityLayers from "./map/ReachabilityLayers";
@@ -20,7 +19,10 @@ const MapLib = dynamic(
 proj4.defs("EPSG:4326", "+proj=longlat +datum=WGS84 +no_defs");
 proj4.defs("EPSG:25832", "+proj=utm +zone=32 +ellps=WGS84 +datum=WGS84 +units=m +no_defs");
 
-const EXCLUDED_HAMBURG_FACILITY_POI = "poi_hh_haltstelle";
+const CARTO_BASEMAP_KEY = process.env.NEXT_PUBLIC_CARTO_BASEMAP_KEY;
+const CARTO_BASEMAP_URL = CARTO_BASEMAP_KEY
+  ? `https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png?key=${CARTO_BASEMAP_KEY}`
+  : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
 
 const MapInstanceReporter = ({ useMap, onMapReady }) => {
   const map = useMap();
@@ -59,6 +61,8 @@ const MapComponent = ({
   setIsSearchZoom,  
   onScreenshotReady,
   onScreenshotAvailabilityChange,
+  onGeoJsonDownloadReady,
+  onGeoJsonDownloadAvailabilityChange,
   onSurveyOpenReady,
   onSurveyAvailabilityChange,
 }) => {
@@ -74,6 +78,14 @@ const MapComponent = ({
     highlightedIndex: null,
     startPoint: null,
     hasDataInformationLayers: false,
+  });
+  const geoJsonArchiveDataRef = useRef({
+    selectedCity: null,
+    visibleGeoJsonLayers: {},
+    reachableHullData: [],
+    reachableRoadsData: [],
+    resultMetadata: [],
+    cityBoundaries: {},
   });
 
   const { t } = useTranslation("common");
@@ -125,6 +137,25 @@ const MapComponent = ({
     onScreenshotAvailabilityChange?.(reachableHullData.length > 0);
   }, [reachableHullData.length, onScreenshotAvailabilityChange]);
 
+  const visibleGeoJsonLayers = useMemo(() => {
+    const visibleLayers = {};
+    const filteredSelectedLayers = selectedLayers.filter((layer) =>
+      availableLayerKeys.has(layer)
+    );
+    const expandedLayers = filteredSelectedLayers.flatMap((layer) =>
+      layerGroupMap[layer] || [layer]
+    );
+
+    for (const layer of expandedLayers) {
+      if (isWmsLayer(layer, layerTypeMap)) continue;
+      if (geoJsonData[layer]) {
+        visibleLayers[layer] = geoJsonData[layer];
+      }
+    }
+
+    return visibleLayers;
+  }, [availableLayerKeys, geoJsonData, layerTypeMap, selectedLayers]);
+
   screenshotDataRef.current = {
     selectedCity,
     reachableHullData,
@@ -133,6 +164,31 @@ const MapComponent = ({
     startPoint: startPoints.at(-1) || null,
     hasDataInformationLayers: selectedLayers.length > 0,
   };
+
+  geoJsonArchiveDataRef.current = {
+    selectedCity,
+    visibleGeoJsonLayers,
+    reachableHullData,
+    reachableRoadsData,
+    resultMetadata,
+    cityBoundaries,
+  };
+
+  useEffect(() => {
+    const hasVisibleGeoJsonLayers = Object.keys(visibleGeoJsonLayers).length > 0;
+    const hasCalculationResults = reachableHullData.length > 0 || reachableRoadsData.length > 0;
+    const hasCityBoundary = Boolean(cityBoundaries[selectedCity]);
+    onGeoJsonDownloadAvailabilityChange?.(
+      hasVisibleGeoJsonLayers || hasCalculationResults || hasCityBoundary
+    );
+  }, [
+    cityBoundaries,
+    onGeoJsonDownloadAvailabilityChange,
+    reachableHullData.length,
+    reachableRoadsData.length,
+    selectedCity,
+    visibleGeoJsonLayers,
+  ]);
 
   const handleMapReady = useCallback((map) => {
     mapInstanceRef.current = map;
@@ -170,6 +226,32 @@ const MapComponent = ({
     return () => onScreenshotReady?.(null);
   }, [handleScreenshotDownload, onScreenshotReady]);
 
+  const handleGeoJsonArchiveDownload = useCallback(async () => {
+    const { exportGeoJsonArchive } = await import("./map/exportGeoJsonArchive");
+    const {
+      selectedCity: exportCity,
+      visibleGeoJsonLayers: exportVisibleGeoJsonLayers,
+      reachableHullData: exportReachableHullData,
+      reachableRoadsData: exportReachableRoadsData,
+      resultMetadata: exportResultMetadata,
+      cityBoundaries: exportCityBoundaries,
+    } = geoJsonArchiveDataRef.current;
+
+    exportGeoJsonArchive({
+      city: exportCity,
+      visibleGeoJsonLayers: exportVisibleGeoJsonLayers,
+      reachableHullData: exportReachableHullData,
+      reachableRoadsData: exportReachableRoadsData,
+      resultMetadata: exportResultMetadata,
+      cityBoundaries: exportCityBoundaries,
+    });
+  }, []);
+
+  useEffect(() => {
+    onGeoJsonDownloadReady?.(handleGeoJsonArchiveDownload);
+    return () => onGeoJsonDownloadReady?.(null);
+  }, [handleGeoJsonArchiveDownload, onGeoJsonDownloadReady]);
+
   const {
     mousePosition,
     handleFocusArea,
@@ -194,7 +276,7 @@ const MapComponent = ({
     Promise.all([
       fetch(`/data/penteli/penteli_boundary.geojson`).then(res => res.json()),
       fetch(`/data/hamburg/hamburg_boundary.geojson`).then(res => res.json())
-    ]).then(([hh, pt]) => {
+    ]).then(([pt, hh]) => {
       setCityBoundaries({ hamburg: hh, penteli: pt });
     });
   }, []);
@@ -235,14 +317,9 @@ const MapComponent = ({
         availableLayerKeys.has(layer)
       );
 
-      const expandedLayers = filteredSelectedLayers.flatMap(layer => {
-        if (selectedCity === "hamburg" && layer === "facility_hh") {
-          return HAMBURG_FACILITY_POI_LAYERS.filter(
-            (poiLayer) => poiLayer !== EXCLUDED_HAMBURG_FACILITY_POI
-          );
-        }
-        return layerGroupMap[layer] || [layer]; // Expand tactile_guidance and other grouped layers
-      });
+      const expandedLayers = filteredSelectedLayers.flatMap(layer =>
+        layerGroupMap[layer] || [layer]
+      );
 
       const expandedLayerSet = new Set(expandedLayers);
 
@@ -427,7 +504,7 @@ const MapComponent = ({
           //different base map
 
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/">CARTO</a>'
-          url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+          url={CARTO_BASEMAP_URL}
 
           // attribut5ion='&copy; <a href="https://www.esri.com/">Esri</a>, &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           // url="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}"

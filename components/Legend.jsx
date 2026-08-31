@@ -51,7 +51,6 @@ const Legend = ({ resultMetadata, onFocusArea }) => {
  
   const poiCategoryNames = {
     poi_hh_gastronomy: t("leg_poi_gastronomy"),
-    poi_hh_haltstelle: t("leg_poi_haltstelle"),
     poi_hh_health: t("leg_poi_health"),
     poi_hh_kita_schule: t("leg_poi_kita_schule"),
     poi_hh_park_spiel: t("leg_poi_park_spiel"),

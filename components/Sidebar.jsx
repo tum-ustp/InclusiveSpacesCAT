@@ -41,6 +41,9 @@ export default function Sidebar({
     onDownloadScreenshot,
     canDownloadScreenshot,
     isDownloadingScreenshot,
+    onDownloadGeoJson,
+    canDownloadGeoJson,
+    isDownloadingGeoJson,
   }) {
     const { t } = useTranslation("common");
     const [srStatus, setSrStatus] = React.useState("");
@@ -141,6 +144,33 @@ export default function Sidebar({
               {isDownloadingScreenshot
                 ? t("download_screenshot_preparing")
                 : t("download_screenshot")}
+            </span>
+          </button>
+          <button
+            type="button"
+            className={`${sty["setup-button"]} ${sty.kbdFocus}`}
+            disabled={!canDownloadGeoJson || isDownloadingGeoJson || !onDownloadGeoJson}
+            onClick={async () => {
+              if (!onDownloadGeoJson) return;
+              try {
+                await onDownloadGeoJson();
+                setSrStatus(t("sr_geojson_archive_saved"));
+              } catch (error) {
+                if (error?.name === "NoGeoJsonDataError") {
+                  alert(t("alert_no_geojson_to_download"));
+                  return;
+                }
+                console.error("Failed to save GeoJSON archive", error);
+                alert(t("alert_geojson_archive_failed"));
+              }
+            }}
+            aria-label={t("download_geojson_archive")}
+            title={t("download_geojson_archive")}
+          >
+            <span>
+              {isDownloadingGeoJson
+                ? t("download_geojson_archive_preparing")
+                : t("download_geojson_archive")}
             </span>
           </button>
         </div>

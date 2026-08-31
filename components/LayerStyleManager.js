@@ -9,16 +9,17 @@ if (typeof window !== "undefined") {
   useMap = require("react-leaflet").useMap;
 }
 import { useEffect } from "react";
-import { HAMBURG_FACILITY_POI_COLORS } from "./poiConfig";
+import { HAMBURG_FACILITY_POI_COLORS, HAMBURG_FACILITY_POI_LAYERS } from "./poiConfig";
 
-// layer grounp for tactile guidance
+// Group layers map one UI checkbox to the concrete GeoJSON layers it controls.
 export const layerGroupMap = {
   tactile_guidance: ["tactile_points", "tactile_lines", "tactile_polygons"],
   munich_lighting: [
     "muc_lighting_unlit",
     "muc_street_lamps_visual",
     "muc_lighting_lit"
-  ]
+  ],
+  facility_hh: HAMBURG_FACILITY_POI_LAYERS
 };
 
 // Build a fast lookup for layer type from availableLayers config [{key,type}, ...]
@@ -227,7 +228,6 @@ export function getStyle(layer, feature) {
         stroke: false
       };
     case "poi_hh_gastronomy":
-    case "poi_hh_haltstelle":
     case "poi_hh_health":
     case "poi_hh_kita_schule":
     case "poi_hh_park_spiel":
