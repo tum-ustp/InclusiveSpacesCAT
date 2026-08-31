@@ -788,32 +788,79 @@
 }
 
 @media (max-width: 1000px) {
-  .contactInner {
-    grid-template-columns: 1fr;
+  .contactSection {
+    padding: 24px 0;
+    overflow: visible;
   }
 
-  .contactHalfInnerLeft {
-    grid-template-columns: 1fr;
-    gap: 16px;
+  .contactSection::before,
+  .contactSection::after {
+    background: #7fc9a6;
+    width: 100%;
   }
 
-  .contactLogoSide {
+  .contactGrid {
+    width: calc(100% - 32px);
+    max-width: 520px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  .contactColMain {
+    order: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    width: 100%;
+    padding: 0;
+  }
+
+  .disclaimerText,
+  .contactText {
+    min-height: 0;
+    width: 100%;
+  }
+
+  .disclaimerText {
+    order: 1;
+    text-align: left;
+  }
+
+  .contactText {
+    order: 2;
+  }
+
+  .contactColLogo {
+    order: 2;
+    width: 100%;
     justify-content: flex-start;
   }
 
-  .contactRightColumn {
-    align-items: flex-start;
+  .contactColPartners {
+    order: 3;
+    width: 100%;
     justify-content: flex-start;
+    padding: 0;
+  }
+
+  .contactCatLogo {
+    max-width: 92px;
   }
 
   .partnerLogoColumn {
-    flex-direction: row;
+    flex-direction: column;
     justify-content: flex-start;
-    flex-wrap: wrap;
+    align-items: flex-start;
+    flex-wrap: nowrap;
+    gap: 10px;
   }
 
   .partnerLogoImg {
-    max-width: 110px;
+    width: auto;
+    max-width: 120px;
+    margin-left: 0;
   }
 }
 

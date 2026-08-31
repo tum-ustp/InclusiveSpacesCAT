@@ -755,3 +755,105 @@
 .skipLinksOpen {
   transform: translateY(0);
 }
+
+@media (max-width: 640px) {
+  .header-container:not(.landing-header-bg) {
+    height: 58px;
+    padding: 6px 8px;
+    display: grid;
+    grid-template-columns: minmax(0, 108px) minmax(82px, 1fr) auto;
+    column-gap: 6px;
+    align-items: center;
+  }
+
+  .header-container:not(.landing-header-bg) > :first-child {
+    min-width: 0;
+  }
+
+  .header-container:not(.landing-header-bg) > :nth-child(2) {
+    position: static;
+    transform: none;
+    min-width: 0;
+  }
+
+  .header-container:not(.landing-header-bg) > :nth-child(3) {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  .logo-group {
+    min-width: 0;
+    width: 100%;
+    gap: 0;
+  }
+
+  .logo-wrapper {
+    width: 100%;
+    max-width: 108px;
+    height: 34px;
+    justify-content: flex-start;
+  }
+
+  .CAT-logo {
+    height: 34px;
+  }
+
+  .link-container-wrapper {
+    gap: 6px;
+    justify-content: flex-end;
+  }
+
+  .lang-switch-wrap {
+    margin-right: 0;
+    font-size: 13px;
+    line-height: 1;
+  }
+
+  .lang-list {
+    gap: 0;
+    flex-wrap: nowrap;
+  }
+
+  .lang-list-item:not(:last-child)::after {
+    margin: 0 0.08rem;
+  }
+
+  .langLink {
+    min-width: 20px;
+    min-height: 24px;
+    padding: 2px 0;
+  }
+
+  .help-button {
+    width: 28px;
+    height: 28px;
+    margin-right: 0;
+  }
+
+  .helpButtonImg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .city-button-wrapper {
+    margin-left: 0;
+  }
+
+  .city-icon {
+    width: 30px;
+    height: 30px;
+  }
+}
+
+@media (max-width: 360px) {
+  .header-container:not(.landing-header-bg) {
+    grid-template-columns: minmax(0, 108px) 0 auto;
+  }
+
+  .header-container:not(.landing-header-bg) > :nth-child(2) {
+    display: none;
+  }
+}
