@@ -57,13 +57,6 @@ const isLinearRing = (ring) =>
       Number.isFinite(point[1])
   );
 
-const getBufferedFeatures = (buffered) => {
-  if (!buffered) return [];
-  if (buffered.type === "FeatureCollection") return buffered.features || [];
-  if (buffered.type === "Feature") return [buffered];
-  return [];
-};
-
 const toOuterPolygonFeature = (feature) => {
   const geometry = feature?.geometry;
   if (!Array.isArray(geometry?.coordinates)) return null;
@@ -85,98 +78,38 @@ const toOuterPolygonFeature = (feature) => {
   return null;
 };
 
-export const buildBufferedAreaWithTiming = (roads, bufferDistance, contourSettings, phaseLabel) => {
-  const runId = `${phaseLabel}-${Date.now()}`;
-
-  const combineStart = `accessibility-combine-start-${runId}`;
-  const combineEnd = `accessibility-combine-end-${runId}`;
-  markPerformance(combineStart);
-  const fc = turf.featureCollection(roads);
-  const combined = turf.combine(fc);
-  markPerformance(combineEnd);
-  const combineMs = measurePerformance(
-    `accessibility:turf:combine:${phaseLabel}`,
-    combineStart,
-    combineEnd
-  );
-
-  const simplifyStart = `accessibility-simplify-start-${runId}`;
-  const simplifyEnd = `accessibility-simplify-end-${runId}`;
-  markPerformance(simplifyStart);
-  const simplified = turf.simplify(combined, {
-    tolerance: contourSettings.tolerance,
-    highQuality: contourSettings.highQuality
-  });
-  markPerformance(simplifyEnd);
-  const simplifyMs = measurePerformance(
-    `accessibility:turf:simplify:${phaseLabel}`,
-    simplifyStart,
-    simplifyEnd
-  );
-
-  const bufferStart = `accessibility-buffer-start-${runId}`;
-  const bufferEnd = `accessibility-buffer-end-${runId}`;
-  markPerformance(bufferStart);
-  const buffered = turf.buffer(simplified, bufferDistance, {
-    units: "kilometers",
-    steps: contourSettings.steps
-  });
-  markPerformance(bufferEnd);
-  const bufferMs = measurePerformance(
-    `accessibility:turf:buffer:${phaseLabel}`,
-    bufferStart,
-    bufferEnd
-  );
-
-  const areaStart = `accessibility-area-start-${runId}`;
-  const areaEnd = `accessibility-area-end-${runId}`;
-  markPerformance(areaStart);
-  const cleaned = {
-    type: "FeatureCollection",
-    features: getBufferedFeatures(buffered)
-      .map(toOuterPolygonFeature)
-      .filter(Boolean)
-  };
-
-  let areaSquareMeters = 0;
-  cleaned.features.forEach((feature) => {
+const measureArea = (features) =>
+  features.reduce((sum, feature) => {
     try {
-      areaSquareMeters += turf.area(feature);
+      return sum + turf.area(feature);
     } catch (err) {
       console.warn("Skipping invalid buffered area feature", err);
+      return sum;
     }
-  });
-  markPerformance(areaEnd);
-  const areaMs = measurePerformance(
-    `accessibility:turf:area:${phaseLabel}`,
-    areaStart,
-    areaEnd
-  );
+  }, 0);
 
-  const turfProcessingMs = Number((combineMs + simplifyMs + bufferMs + areaMs).toFixed(2));
+export const buildBufferedAreaWithTiming = (roads) => {
+  const inputFeatures = Array.isArray(roads) ? roads : [];
+  const cleaned = {
+    type: "FeatureCollection",
+    features: inputFeatures.map(toOuterPolygonFeature).filter(Boolean)
+  };
 
   return {
     cleaned,
-    areaHectares: areaSquareMeters / 10000,
-    timings: {
-      combineMs,
-      simplifyMs,
-      bufferMs,
-      areaMs,
-      turfProcessingMs,
-    },
+    areaHectares: measureArea(cleaned.features) / 10000,
   };
 };
 
-export const logAccessibilityTiming = (phaseLabel, requestTiming, turfTiming, inputGeometryStats) => {
-  const row = getAccessibilityTimingRow(phaseLabel, requestTiming, turfTiming, inputGeometryStats);
+export const logAccessibilityTiming = (phaseLabel, requestTiming, inputGeometryStats) => {
+  const row = getAccessibilityTimingRow(phaseLabel, requestTiming, inputGeometryStats);
 
   console.groupCollapsed(`[accessibility timing] ${phaseLabel}`);
   console.table(row);
   console.groupEnd();
 };
 
-export const getAccessibilityTimingRow = (phaseLabel, requestTiming, turfTiming, inputGeometryStats) => {
+export const getAccessibilityTimingRow = (phaseLabel, requestTiming, inputGeometryStats) => {
   const serverTiming = requestTiming?.serverTiming || {};
   const fetchAndParseMs = Number((requestTiming?.fetchAndParseMs || 0).toFixed(2));
   const apiTotalMs = Number((serverTiming.apiTotalMs || 0).toFixed(2));
@@ -193,13 +126,13 @@ export const getAccessibilityTimingRow = (phaseLabel, requestTiming, turfTiming,
     (serverTiming.apiOverheadMs ?? Math.max(0, apiTotalMs - nearestVertexMs - routingQueryMs)).toFixed(2)
   );
   const networkAndBrowserParseMs = Math.max(0, Number((fetchAndParseMs - apiTotalMs).toFixed(2)));
-  const turfProcessingMs = Number((turfTiming?.turfProcessingMs || 0).toFixed(2));
-  const postServerToClientReadyMs = Number(
-    (networkAndBrowserParseMs + turfProcessingMs).toFixed(2)
-  );
   const serverFeatureCount = Number(serverTiming.featureCount || 0);
   const serverRawCoordinateCount = Number(serverTiming.rawCoordinateCount || 0);
   const serverOutputCoordinateCount = Number(serverTiming.outputCoordinateCount || 0);
+  const polygonFeatureCount = Number(serverTiming.polygonFeatureCount || 0);
+  const polygonCoordinateCount = Number(serverTiming.polygonCoordinateCount || 0);
+  const polygonBytes = Number(serverTiming.polygonBytes || 0);
+  const networkBytes = Number(serverTiming.networkBytes || 0);
   const payloadBytes = Number(serverTiming.payloadBytes ?? serverTiming.responseBytes ?? 0);
 
   return {
@@ -216,28 +149,18 @@ export const getAccessibilityTimingRow = (phaseLabel, requestTiming, turfTiming,
     totalServerMs,
     fetchAndParseMs,
     networkAndBrowserParseMs,
-    postServerToClientReadyMs,
     serverFeatureCount,
     serverRawCoordinateCount,
     serverOutputCoordinateCount,
+    polygonFeatureCount,
+    polygonCoordinateCount,
+    polygonBytes,
+    networkBytes,
     payloadBytes,
-    clientFeatureCount: inputGeometryStats?.featureCount || 0,
-    clientCoordinateCount: inputGeometryStats?.coordinateCount || 0,
-    combineMs: Number((turfTiming?.combineMs || 0).toFixed(2)),
-    simplifyMs: Number((turfTiming?.simplifyMs || 0).toFixed(2)),
-    bufferMs: Number((turfTiming?.bufferMs || 0).toFixed(2)),
-    areaMs: Number((turfTiming?.areaMs || 0).toFixed(2)),
-    turfProcessingMs,
-    endToEndMs: Number((fetchAndParseMs + turfProcessingMs).toFixed(2)),
+    clientPolygonFeatureCount: inputGeometryStats?.polygonFeatureCount || 0,
+    clientPolygonCoordinateCount: inputGeometryStats?.polygonCoordinateCount || 0,
+    clientNetworkFeatureCount: inputGeometryStats?.networkFeatureCount || 0,
+    clientNetworkCoordinateCount: inputGeometryStats?.networkCoordinateCount || 0,
+    endToEndMs: Number(fetchAndParseMs.toFixed(2)),
   };
-};
-
-export const getContourSettings = (featureCount) => {
-  if (featureCount > 4000) {
-    return { tolerance: 0.0002, highQuality: false, steps: 8 };
-  }
-  if (featureCount > 1500) {
-    return { tolerance: 0.0001, highQuality: false, steps: 14 };
-  }
-  return { tolerance: 0.00007, highQuality: true, steps: 16 };
 };

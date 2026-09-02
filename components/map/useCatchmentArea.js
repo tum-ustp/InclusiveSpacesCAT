@@ -7,7 +7,6 @@ import {
   countCoordinates,
   buildBufferedAreaWithTiming,
   logAccessibilityTiming,
-  getContourSettings,
 } from "./performance";
 
 const ACCESSIBILITY_GEOMETRY_MODE = "simplified";
@@ -57,7 +56,7 @@ export const useCatchmentArea = ({
   const [reachableHullData, setReachableHullData] = useState([]);
   const [isCalculating, setIsCalculating] = useState(false); // function attachment calculation works?
   const [resultMetadata, setResultMetadata] = useState([]); // store metadata for each result/ user setting each time
-  const [defaultResultCache, setDefaultResultCache] = useState({}); // key: `${lat},${lon}`, value: {roads, hull, area}
+  const [defaultResultCache, setDefaultResultCache] = useState({}); // key: `${lat},${lon}`, value: {network, hull, area}
   const [, setDefaultGroupIndex] = useState(1);  // default group index for the first result
   const [groupMapping, setGroupMapping] = useState({}); // mapping of group index to default results,index for weighted results
 
@@ -153,7 +152,6 @@ export const useCatchmentArea = ({
       params.append("city", selectedCity);
       params.append("geometry", ACCESSIBILITY_GEOMETRY_MODE);
       params.append("mode", mode);
-      params.append("geometryPipeline", mode === "default" ? "collect" : "unaryUnion");
 
       const runId = `${mode}-${Date.now()}`;
       const startMark = `accessibility-fetch-start-${runId}`;
@@ -249,8 +247,6 @@ export const useCatchmentArea = ({
         let defaultArea;
         let currentGroupIndex;
 
-        const bufferDistance = selectedCity === "penteli" ? 0.1 : 0.02;
-
         // --------- Step 1: Default Reslut (only speed/time/start) ---------
         if (!defaultResultCache[key]) {
           const newGroupIndex = Object.keys(groupMapping).length + 1;
@@ -273,26 +269,20 @@ export const useCatchmentArea = ({
             signal: controller.signal,
             mode: "default",
           });
-          if (!defaultRes || !defaultRes.roads) {
+          if (!defaultRes || !defaultRes.polygon) {
             alert(t("err_api_failed_try_again"));
             setComputeAccessibility(false);
             setIsCalculating(false);
             return;
           }
-          if (!isValidGeoJSON(defaultRes.roads)) {
+          if (!isValidGeoJSON(defaultRes.polygon)) {
             alert(t("err_no_reachable_default"));
             setComputeAccessibility(false);
             setIsCalculating(false);
             return;
           }
-          const defaultRoads = defaultRes.roads.features;
-          const contourSettings = getContourSettings(defaultRoads.length);
-          const defaultProcessing = buildBufferedAreaWithTiming(
-            defaultRoads,
-            bufferDistance,
-            contourSettings,
-            "default"
-          );
+          const defaultRoads = defaultRes.polygon.features;
+          const defaultProcessing = buildBufferedAreaWithTiming(defaultRoads);
           const cleaned = defaultProcessing.cleaned;
           if (!isValidGeoJSON(cleaned)) {
             alert(t("err_no_reachable_default"));
@@ -304,15 +294,16 @@ export const useCatchmentArea = ({
           logAccessibilityTiming(
             "default",
             defaultRes.requestTiming,
-            defaultProcessing.timings,
             {
-              featureCount: defaultRoads.length,
-              coordinateCount: countCoordinates(defaultRoads),
+              polygonFeatureCount: defaultRoads.length,
+              polygonCoordinateCount: countCoordinates(defaultRoads),
+              networkFeatureCount: defaultRes.network?.features?.length || 0,
+              networkCoordinateCount: countCoordinates(defaultRes.network),
             }
           );
 
-          setDefaultResultCache(prev => ({ ...prev, [key]: { roads: defaultRes.roads, hull: cleaned, area: defaultArea } }));
-          setReachableRoadsData(prev => [...prev, defaultRes.roads]);
+          setDefaultResultCache(prev => ({ ...prev, [key]: { network: defaultRes.network, hull: cleaned, area: defaultArea } }));
+          setReachableRoadsData(prev => [...prev, defaultRes.network]);
           setReachableHullData(prev => [...prev, cleaned]);
 
           const { poiGroupCounts, totalPOI } = countPOIsInArea(cleaned);
@@ -349,22 +340,16 @@ export const useCatchmentArea = ({
             signal: controller.signal,
             mode: "weighted",
           });
-          if (!weightedRes || !weightedRes.roads) {
+          if (!weightedRes || !weightedRes.polygon) {
             alert(t("err_api_failed_try_again"));
             return;
           }
-          if (!isValidGeoJSON(weightedRes.roads)) {
+          if (!isValidGeoJSON(weightedRes.polygon)) {
             alert(t("err_no_reachable_weighted"));
             return;
           }
-          const weightedRoads = weightedRes.roads.features;
-          const contourSettings2 = getContourSettings(weightedRoads.length);
-          const weightedProcessing = buildBufferedAreaWithTiming(
-            weightedRoads,
-            bufferDistance,
-            contourSettings2,
-            "weighted"
-          );
+          const weightedRoads = weightedRes.polygon.features;
+          const weightedProcessing = buildBufferedAreaWithTiming(weightedRoads);
           const cleaned2 = weightedProcessing.cleaned;
           if (!isValidGeoJSON(cleaned2)) {
             alert(t("err_no_reachable_weighted"));
@@ -374,17 +359,18 @@ export const useCatchmentArea = ({
           logAccessibilityTiming(
             "weighted",
             weightedRes.requestTiming,
-            weightedProcessing.timings,
             {
-              featureCount: weightedRoads.length,
-              coordinateCount: countCoordinates(weightedRoads),
+              polygonFeatureCount: weightedRoads.length,
+              polygonCoordinateCount: countCoordinates(weightedRoads),
+              networkFeatureCount: weightedRes.network?.features?.length || 0,
+              networkCoordinateCount: countCoordinates(weightedRes.network),
             }
           );
 
           const ratio = (weightedArea / defaultArea).toFixed(2);
           const color = colorPool[resultMetadata.length % colorPool.length];
 
-          setReachableRoadsData(prev => [...prev, weightedRes.roads]);
+          setReachableRoadsData(prev => [...prev, weightedRes.network]);
           setReachableHullData(prev => [...prev, cleaned2]);
 
           const { poiGroupCounts, totalPOI } = countPOIsInArea(cleaned2);

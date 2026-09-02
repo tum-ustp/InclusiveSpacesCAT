@@ -28,6 +28,7 @@ const CITY_CONFIG = {
     verticesGeomColumn: "the_geom",
     supportsWeightedCosts: true,
     simplifyTolerance: 0.00005,
+    bufferMeters: 20,
   },
   penteli: {
     waysTable: "pt_ways",
@@ -37,6 +38,7 @@ const CITY_CONFIG = {
     verticesGeomColumn: "the_geom",
     supportsWeightedCosts: true,
     simplifyTolerance: 0.00006,
+    bufferMeters: 100,
   },
   munich: {
     waysTable: "muc_ways_noded_4326_v2",
@@ -46,6 +48,7 @@ const CITY_CONFIG = {
     verticesGeomColumn: "geom",
     supportsWeightedCosts: true,
     simplifyTolerance: 0.00005,
+    bufferMeters: 20,
   },
 };
 
@@ -57,29 +60,16 @@ const parseValue = (value, fallback = 1.0) => {
 const toFixedMs = (value) => Number(value.toFixed(2));
 
 export const GEOMETRY_PIPELINES = {
-  collect: "collect",
-  unaryUnion: "unaryUnion",
   serverBuffer: "serverBuffer",
 };
 
-export const buildFinalRoadsGeometrySql = (pipeline, geomColumn) => {
-  if (pipeline === GEOMETRY_PIPELINES.serverBuffer) {
-    return `
-      ST_UnaryUnion(
-        ST_Buffer(
-          ST_Collect(${geomColumn}),
-          $4::float
-        )
+export const buildFinalRoadsGeometrySql = (geomColumn) => `
+    ST_UnaryUnion(
+      ST_Collect(
+        ST_Buffer(${geomColumn}::geography, $5::float)::geometry
       )
-    `;
-  }
-
-  if (pipeline === GEOMETRY_PIPELINES.collect) {
-    return `ST_Collect(${geomColumn})`;
-  }
-
-  return `ST_LineMerge(ST_UnaryUnion(ST_Collect(${geomColumn})))`;
-};
+    )
+  `;
 
 const buildWeightedCostSql = (weights, tableAlias = "") => {
   const columnPrefix = tableAlias ? `${tableAlias}.` : "";
@@ -115,12 +105,11 @@ const buildWeightedCostSql = (weights, tableAlias = "") => {
 
 export const buildAccessibilityGeometryQuery = ({
   cityConfig,
-  geometryPipeline,
   mode = "default",
   weights = {},
 }) => {
   const geomColumn = "road_geom";
-  const collectedGeometrySql = buildFinalRoadsGeometrySql(geometryPipeline, geomColumn);
+  const collectedGeometrySql = buildFinalRoadsGeometrySql(geomColumn);
   const edgeSql =
     mode === "weighted"
       ? `SELECT gid AS id, source, target,
@@ -218,6 +207,11 @@ export const buildAccessibilityGeometryQuery = ({
             ${collectedGeometrySql} AS geom
           FROM selected_roads
         ),
+        simplified_network AS (
+          SELECT
+            ST_Collect(ST_SimplifyPreserveTopology(road_geom, $4::float)) AS geom
+          FROM selected_roads
+        ),
         dumped_output AS (
           SELECT
             (ST_Dump(
@@ -238,11 +232,29 @@ export const buildAccessibilityGeometryQuery = ({
             geom
           FROM dumped_output
         ),
+        dumped_network AS (
+          SELECT
+            (ST_Dump(geom)).geom AS geom
+          FROM simplified_network
+          WHERE geom IS NOT NULL AND NOT ST_IsEmpty(geom)
+        ),
+        network_for_output AS (
+          SELECT
+            ROW_NUMBER() OVER (ORDER BY ST_XMin(geom), ST_YMin(geom))::int AS gid,
+            geom
+          FROM dumped_network
+        ),
         output_payload_stats AS (
           SELECT
             COUNT(*)::int AS feature_count,
             COALESCE(SUM(ST_NPoints(geom)), 0)::bigint AS total_points
           FROM geometry_for_output
+        ),
+        network_payload_stats AS (
+          SELECT
+            COUNT(*)::int AS feature_count,
+            COALESCE(SUM(ST_NPoints(geom)), 0)::bigint AS total_points
+          FROM network_for_output
         )
         SELECT
           json_build_object(
@@ -257,17 +269,40 @@ export const buildAccessibilityGeometryQuery = ({
               ) FILTER (WHERE go.gid IS NOT NULL),
               '[]'::json
             )
-          ) AS geojson,
+          ) AS polygon_geojson,
+          (
+            SELECT json_build_object(
+              'type', 'FeatureCollection',
+              'features', COALESCE(
+                json_agg(
+                  json_build_object(
+                    'type', 'Feature',
+                    'geometry', ST_AsGeoJSON(no.geom)::json,
+                    'properties', json_build_object('gid', no.gid)
+                  )
+                ) FILTER (WHERE no.gid IS NOT NULL),
+                '[]'::json
+              )
+            )
+            FROM network_for_output no
+          ) AS network_geojson,
           raw_payload_stats.feature_count,
           raw_payload_stats.total_points AS raw_total_points,
-          output_payload_stats.total_points AS output_total_points
+          output_payload_stats.feature_count AS polygon_feature_count,
+          output_payload_stats.total_points AS polygon_total_points,
+          network_payload_stats.feature_count AS network_feature_count,
+          network_payload_stats.total_points AS network_total_points
         FROM raw_payload_stats
         CROSS JOIN output_payload_stats
+        CROSS JOIN network_payload_stats
         LEFT JOIN geometry_for_output go ON TRUE
         GROUP BY
           raw_payload_stats.feature_count,
           raw_payload_stats.total_points,
-          output_payload_stats.total_points;
+          output_payload_stats.feature_count,
+          output_payload_stats.total_points,
+          network_payload_stats.feature_count,
+          network_payload_stats.total_points;
   `;
 };
 
@@ -277,7 +312,7 @@ export default async function handler(req, res) {
   const cityId = (city || "hamburg").toLowerCase();
   const cityConfig = CITY_CONFIG[cityId] || CITY_CONFIG.hamburg;
   const geometryMode = geometry === "simplified" ? "simplified" : "full";
-  const geometryPipeline = req.query.geometryPipeline || GEOMETRY_PIPELINES.unaryUnion;
+  const geometryPipeline = GEOMETRY_PIPELINES.serverBuffer;
   const mode = req.query.mode === "weighted" ? "weighted" : "default";
 
   if (!lat || !lon) {
@@ -287,6 +322,7 @@ export default async function handler(req, res) {
   const walkingTime = parseValue(time, 15);
   const walkingSpeed = parseValue(speed, 5);
   const maxDistance = (walkingSpeed * 1000 * walkingTime) / 60;
+  const bufferMeters = parseValue(req.query.bufferMeters, cityConfig.bufferMeters ?? 20);
 
   try {
     const db = getPool();
@@ -332,7 +368,6 @@ export default async function handler(req, res) {
     const result = await db.query(
       buildAccessibilityGeometryQuery({
         cityConfig,
-        geometryPipeline,
         mode,
         weights: {
           noise: noiseVariable,
@@ -362,6 +397,7 @@ export default async function handler(req, res) {
         maxDistance,
         geometryMode,
         cityConfig.simplifyTolerance,
+        bufferMeters,
       ]
     );
     const routingQueryMs = performance.now() - routingQueryStart;
@@ -379,7 +415,12 @@ export default async function handler(req, res) {
     );
 
     const row = result.rows[0] || {};
-    const geojson = row.geojson;
+    const polygonGeojson = row.polygon_geojson;
+    const networkGeojson = row.network_geojson;
+    const hasPolygon =
+      polygonGeojson &&
+      Array.isArray(polygonGeojson.features) &&
+      polygonGeojson.features.length > 0;
     const timing = {
       nearestVertexMs: toFixedMs(nearestVertexMs),
       routingQueryMs: toFixedMs(routingQueryMs),
@@ -395,26 +436,32 @@ export default async function handler(req, res) {
       geometryPipeline,
       featureCount: row.feature_count || 0,
       rawCoordinateCount: Number(row.raw_total_points || 0),
-      outputCoordinateCount: Number(row.output_total_points || 0),
+      outputCoordinateCount: Number(row.polygon_total_points || 0),
+      polygonFeatureCount: Number(row.polygon_feature_count || 0),
+      polygonCoordinateCount: Number(row.polygon_total_points || 0),
+      networkFeatureCount: Number(row.network_feature_count || 0),
+      networkCoordinateCount: Number(row.network_total_points || 0),
+      polygonBytes: 0,
+      networkBytes: 0,
       payloadBytes: 0,
     };
 
     const responseBody = {
-      roads:
-        geojson && Array.isArray(geojson.features) && geojson.features.length > 0
-          ? geojson
+      polygon: hasPolygon ? polygonGeojson : null,
+      network:
+        networkGeojson &&
+        Array.isArray(networkGeojson.features) &&
+        networkGeojson.features.length > 0
+          ? networkGeojson
           : null,
       message:
-        geojson && Array.isArray(geojson.features) && geojson.features.length > 0
-          ? undefined
-          : "No reachable roads found for this setting.",
+        hasPolygon ? undefined : "No reachable roads found for this setting.",
       timing,
     };
 
-    timing.payloadBytes = Buffer.byteLength(
-      JSON.stringify(responseBody),
-      "utf8"
-    );
+    timing.polygonBytes = Buffer.byteLength(JSON.stringify(responseBody.polygon), "utf8");
+    timing.networkBytes = Buffer.byteLength(JSON.stringify(responseBody.network), "utf8");
+    timing.payloadBytes = Buffer.byteLength(JSON.stringify(responseBody), "utf8");
 
     res.setHeader(
       "Server-Timing",

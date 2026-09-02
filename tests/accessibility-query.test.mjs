@@ -4,21 +4,19 @@ import { readFile } from "node:fs/promises";
 
 const apiFile = new URL("../pages/api/accessibility.js", import.meta.url);
 
-test("accessibility API contains the three benchmarkable geometry pipelines", async () => {
+test("accessibility API contains the server buffer geometry pipeline", async () => {
   const src = await readFile(apiFile, "utf8");
 
   assert.match(src, /GEOMETRY_PIPELINES/);
-  assert.match(src, /collect:\s*"collect"/);
-  assert.match(src, /unaryUnion:\s*"unaryUnion"/);
   assert.match(src, /serverBuffer:\s*"serverBuffer"/);
 });
 
-test("collect, unary union, and server buffer SQL fragments remain distinct", async () => {
+test("server buffer SQL and exported GeoJSON roles remain distinct", async () => {
   const src = await readFile(apiFile, "utf8");
 
-  assert.match(src, /ST_Collect\(\$\{geomColumn\}\)/);
-  assert.match(src, /ST_LineMerge\(ST_UnaryUnion\(ST_Collect\(\$\{geomColumn\}\)\)\)/);
-  assert.match(src, /ST_UnaryUnion\(\s*ST_Buffer\(\s*ST_Collect\(\$\{geomColumn\}\),\s*\$4::float\s*\)\s*\)/s);
+  assert.match(src, /ST_UnaryUnion\(\s*ST_Collect\(\s*ST_Buffer\(\$\{geomColumn\}::geography,\s*\$5::float\s*\)::geometry\s*\)\s*\)/s);
+  assert.match(src, /polygon_geojson/);
+  assert.match(src, /network_geojson/);
 });
 
 test("server timing exports the requested server-side breakdown", async () => {
