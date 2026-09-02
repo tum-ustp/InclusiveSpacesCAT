@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "perf:accessibility": "node scripts/accessibility-load-test.mjs",
     "test": "node --test tests/accessibility-*.test.mjs"
   },
   "dependencies": {

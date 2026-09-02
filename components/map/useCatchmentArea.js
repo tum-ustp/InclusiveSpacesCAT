@@ -64,12 +64,14 @@ export const useCatchmentArea = ({
   const abortRef = useRef(null);
   const [calcElapsed, setCalcElapsed] = useState(0);
   const [calcStage, setCalcStage] = useState("");
+  const [calcQueueStatus, setCalcQueueStatus] = useState(null);
   const cancelCalculation = () => {
     abortRef.current?.abort();
     abortRef.current = null;
     setComputeAccessibility(false);
     setIsCalculating(false);
     setCalcStage("");
+    setCalcQueueStatus(null);
   };
 
   // (1) timer (Ns)
@@ -123,6 +125,7 @@ export const useCatchmentArea = ({
   }) => {
     try {
       const selected = enabledVariables || [];
+      const requestId = `${mode}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
       const params = new URLSearchParams({
         lat, lon, time, speed,
@@ -152,17 +155,50 @@ export const useCatchmentArea = ({
       params.append("city", selectedCity);
       params.append("geometry", ACCESSIBILITY_GEOMETRY_MODE);
       params.append("mode", mode);
+      params.append("requestId", requestId);
 
       const runId = `${mode}-${Date.now()}`;
       const startMark = `accessibility-fetch-start-${runId}`;
       const endMark = `accessibility-fetch-end-${runId}`;
       const measureName = `accessibility:fetch:${mode}`;
+      let queueStatusTimer = null;
+      const updateQueueStatus = async () => {
+        try {
+          const statusRes = await fetch(`/api/accessibility?queueStatusId=${encodeURIComponent(requestId)}`);
+          if (statusRes.ok) {
+            setCalcQueueStatus(await statusRes.json());
+          }
+        } catch (err) {
+          console.warn("Failed to update accessibility queue status", err);
+        }
+      };
+
+      setCalcQueueStatus({
+        id: requestId,
+        status: "queued",
+        activeCount: 0,
+        queuedCount: 0,
+        queuePosition: null,
+      });
+
+      updateQueueStatus();
+      if (typeof window !== "undefined") {
+        queueStatusTimer = window.setInterval(updateQueueStatus, 2000);
+      }
+
       markPerformance(startMark);
-      const res = await fetch(`/api/accessibility?${params}`, { signal });
-      if (!res.ok) throw new Error("API call failed");
-      const data = await res.json();
-      markPerformance(endMark);
-      measurePerformance(measureName, startMark, endMark);
+      let data;
+      try {
+        const res = await fetch(`/api/accessibility?${params}`, { signal });
+        if (!res.ok) throw new Error("API call failed");
+        data = await res.json();
+        markPerformance(endMark);
+        measurePerformance(measureName, startMark, endMark);
+      } finally {
+        if (queueStatusTimer) {
+          window.clearInterval(queueStatusTimer);
+        }
+      }
 
       return {
         ...data,
@@ -402,6 +438,7 @@ export const useCatchmentArea = ({
         abortRef.current = null;
         setIsCalculating(false);
         setCalcStage("");
+        setCalcQueueStatus(null);
         setComputeAccessibility(false);
       }
     };
@@ -418,6 +455,7 @@ export const useCatchmentArea = ({
     resultMetadata,
     calcElapsed,
     calcStage,
+    calcQueueStatus,
     isValidGeoJSON,
   };
 };

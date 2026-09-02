@@ -287,7 +287,27 @@ This project includes a lot of keyboard and screen-reader handling:
 
 ---
 
-## 9) Troubleshooting
+## 9) Tests & validation
+
+The project currently has a small test/validation set:
+
+* `npm test` - runs Node test files matching `tests/accessibility-*.test.mjs`; currently covers accessibility API query behavior.
+* `npm run lint` - runs Next.js/ESLint checks.
+* `npm run build` - production build smoke check for the Next.js app.
+* `npm run perf:accessibility` - runs `scripts/accessibility-load-test.mjs`, which sends parallel `/api/accessibility` requests for Hamburg in both default and weighted modes.
+
+Useful examples:
+
+```bash
+npm test
+npm run lint
+npm run build
+npm run perf:accessibility -- --url=http://localhost:3000 --count=9
+```
+
+---
+
+## 10) Troubleshooting
 
 ### Map shows blank / crashes on SSR
 
@@ -311,7 +331,7 @@ This project includes a lot of keyboard and screen-reader handling:
 
 ---
 
-## 10) Deployment notes (current state)
+## 11) Deployment notes (current state)
 
 * The app is a standard Next.js project; production build:
 

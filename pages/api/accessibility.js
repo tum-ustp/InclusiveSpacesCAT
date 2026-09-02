@@ -1,5 +1,10 @@
 import pg from "pg";
 import { performance } from "node:perf_hooks";
+import {
+  finishAccessibilityQueueTurn,
+  getAccessibilityQueueStatus,
+  waitForAccessibilityQueueTurn,
+} from "../../lib/accessibilityQueue";
 
 const { Pool } = pg;
 let pool;
@@ -308,7 +313,18 @@ export const buildAccessibilityGeometryQuery = ({
 
 export default async function handler(req, res) {
   const requestStart = performance.now();
-  const { lat, lon, time, speed, city, geometry } = req.query;
+  const { lat, lon, time, speed, city, geometry, requestId, queueGroupId, queueStatusId } = req.query;
+
+  if (typeof queueStatusId === "string" && queueStatusId) {
+    return res.status(200).json(getAccessibilityQueueStatus(queueStatusId));
+  }
+
+  const queueRequestId =
+    typeof requestId === "string" && requestId
+      ? requestId
+      : `accessibility-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  const queueGroupKey =
+    typeof queueGroupId === "string" && queueGroupId ? queueGroupId : queueRequestId;
   const cityId = (city || "hamburg").toLowerCase();
   const cityConfig = CITY_CONFIG[cityId] || CITY_CONFIG.hamburg;
   const geometryMode = geometry === "simplified" ? "simplified" : "full";
@@ -323,8 +339,11 @@ export default async function handler(req, res) {
   const walkingSpeed = parseValue(speed, 5);
   const maxDistance = (walkingSpeed * 1000 * walkingTime) / 60;
   const bufferMeters = parseValue(req.query.bufferMeters, cityConfig.bufferMeters ?? 20);
+  let queueTicket = null;
 
   try {
+    queueTicket = await waitForAccessibilityQueueTurn(queueRequestId, queueGroupKey);
+
     const db = getPool();
     const nearestVertexStart = performance.now();
     const nearestVertexResult = await db.query(
@@ -422,6 +441,9 @@ export default async function handler(req, res) {
       Array.isArray(polygonGeojson.features) &&
       polygonGeojson.features.length > 0;
     const timing = {
+      requestId: queueRequestId,
+      queueWaitMs: toFixedMs(queueTicket.startedAt - queueTicket.enqueuedAt),
+      queuePositionAtEnqueue: queueTicket.positionAtEnqueue,
       nearestVertexMs: toFixedMs(nearestVertexMs),
       routingQueryMs: toFixedMs(routingQueryMs),
       pgrDrivingDistanceMs: toFixedMs(routingQueryMs),
@@ -479,7 +501,30 @@ export default async function handler(req, res) {
 
     return res.status(200).json(responseBody);
   } catch (error) {
+    if (error?.code === "ACCESSIBILITY_QUEUE_TIMEOUT") {
+      return res.status(503).json({
+        error: "Accessibility calculation queue wait timed out",
+        requestId: queueRequestId,
+        retryAfterSeconds: 30,
+      });
+    }
+
+    if (error?.code === "ACCESSIBILITY_QUEUE_FULL") {
+      return res.status(503).json({
+        error: "Accessibility calculation queue is full",
+        requestId: queueRequestId,
+        retryAfterSeconds: 60,
+      });
+    }
+
     console.error("Error in API:", error);
     return res.status(500).json({ error: "Internal server error" });
+  } finally {
+    if (queueTicket) {
+      finishAccessibilityQueueTurn(
+        queueRequestId,
+        res.statusCode >= 500 ? "failed" : "completed"
+      );
+    }
   }
 }

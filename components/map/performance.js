@@ -125,6 +125,8 @@ export const getAccessibilityTimingRow = (phaseLabel, requestTiming, inputGeomet
   const apiOverheadMs = Number(
     (serverTiming.apiOverheadMs ?? Math.max(0, apiTotalMs - nearestVertexMs - routingQueryMs)).toFixed(2)
   );
+  const queueWaitMs = Number((serverTiming.queueWaitMs || 0).toFixed(2));
+  const queuePositionAtEnqueue = Number(serverTiming.queuePositionAtEnqueue || 0);
   const networkAndBrowserParseMs = Math.max(0, Number((fetchAndParseMs - apiTotalMs).toFixed(2)));
   const serverFeatureCount = Number(serverTiming.featureCount || 0);
   const serverRawCoordinateCount = Number(serverTiming.rawCoordinateCount || 0);
@@ -138,6 +140,8 @@ export const getAccessibilityTimingRow = (phaseLabel, requestTiming, inputGeomet
   return {
     phaseLabel,
     geometryMode: serverTiming.geometryMode || "full",
+    queueWaitMs,
+    queuePositionAtEnqueue,
     routingQueryMs,
     reachableEdgeSelectionMs,
     geometryUnionMs,

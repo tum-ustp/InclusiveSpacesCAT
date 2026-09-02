@@ -112,6 +112,7 @@ const MapComponent = ({
     resultMetadata,
     calcElapsed,
     calcStage,
+    calcQueueStatus,
     isValidGeoJSON,
   } = useCatchmentArea({
     selectedCity,
@@ -415,6 +416,20 @@ const MapComponent = ({
 
   if (!MapModule || !MapModule.MapContainer) return null;
   const { MapContainer, TileLayer, Marker, Popup, Pane } = MapModule;
+  const queueStatusText = calcQueueStatus?.queuePosition
+    ? t("loading_queue_status", {
+        active: calcQueueStatus.activeCount ?? 0,
+        queued: calcQueueStatus.queuedCount ?? 0,
+        position: calcQueueStatus.queuePosition,
+        defaultValue:
+          "Server load: {{active}} active, {{queued}} waiting. Your queue position: {{position}}.",
+      })
+    : t("loading_queue_running", {
+        active: calcQueueStatus?.activeCount ?? 0,
+        queued: calcQueueStatus?.queuedCount ?? 0,
+        defaultValue:
+          "Server load: {{active}} active, {{queued}} waiting. Your request is being processed.",
+      });
 
   return (
     <section
@@ -447,6 +462,18 @@ const MapComponent = ({
             <div className={sty.loadingHint}>
               {t('loading_cancle')}
             </div>
+
+            {calcQueueStatus && (
+              <div className={sty.queueStatus}>
+                <div>{queueStatusText}</div>
+                <div className={sty.queueNote}>
+                  {t("loading_queue_note", {
+                    defaultValue:
+                      "Calculations run on shared open-source research infrastructure, so peak workshop demand can require a short wait.",
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
