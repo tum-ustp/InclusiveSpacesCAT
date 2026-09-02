@@ -46,6 +46,45 @@ export const countCoordinates = (geojson) => {
   return countGeometryCoordinates(geojson);
 };
 
+const isLinearRing = (ring) =>
+  Array.isArray(ring) &&
+  ring.length >= 4 &&
+  ring.every(
+    (point) =>
+      Array.isArray(point) &&
+      point.length >= 2 &&
+      Number.isFinite(point[0]) &&
+      Number.isFinite(point[1])
+  );
+
+const getBufferedFeatures = (buffered) => {
+  if (!buffered) return [];
+  if (buffered.type === "FeatureCollection") return buffered.features || [];
+  if (buffered.type === "Feature") return [buffered];
+  return [];
+};
+
+const toOuterPolygonFeature = (feature) => {
+  const geometry = feature?.geometry;
+  if (!Array.isArray(geometry?.coordinates)) return null;
+
+  if (geometry.type === "Polygon") {
+    const outerRing = geometry.coordinates[0];
+    return isLinearRing(outerRing) ? turf.polygon([outerRing]) : null;
+  }
+
+  if (geometry.type === "MultiPolygon") {
+    const polygons = geometry.coordinates
+      .map((polygon) => polygon?.[0])
+      .filter(isLinearRing)
+      .map((outerRing) => [outerRing]);
+
+    return polygons.length ? turf.multiPolygon(polygons) : null;
+  }
+
+  return null;
+};
+
 export const buildBufferedAreaWithTiming = (roads, bufferDistance, contourSettings, phaseLabel) => {
   const runId = `${phaseLabel}-${Date.now()}`;
 
@@ -94,20 +133,18 @@ export const buildBufferedAreaWithTiming = (roads, bufferDistance, contourSettin
   markPerformance(areaStart);
   const cleaned = {
     type: "FeatureCollection",
-    features: buffered.features.map((f) => {
-      if (f.geometry.type === "Polygon") {
-        return turf.polygon([f.geometry.coordinates[0]]);
-      }
-      if (f.geometry.type === "MultiPolygon") {
-        return turf.multiPolygon(f.geometry.coordinates.map((p) => [p[0]]));
-      }
-      return f;
-    })
+    features: getBufferedFeatures(buffered)
+      .map(toOuterPolygonFeature)
+      .filter(Boolean)
   };
 
   let areaSquareMeters = 0;
   cleaned.features.forEach((feature) => {
-    areaSquareMeters += turf.area(feature);
+    try {
+      areaSquareMeters += turf.area(feature);
+    } catch (err) {
+      console.warn("Skipping invalid buffered area feature", err);
+    }
   });
   markPerformance(areaEnd);
   const areaMs = measurePerformance(

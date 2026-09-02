@@ -294,6 +294,12 @@ export const useCatchmentArea = ({
             "default"
           );
           const cleaned = defaultProcessing.cleaned;
+          if (!isValidGeoJSON(cleaned)) {
+            alert(t("err_no_reachable_default"));
+            setComputeAccessibility(false);
+            setIsCalculating(false);
+            return;
+          }
           defaultArea = defaultProcessing.areaHectares;
           logAccessibilityTiming(
             "default",
@@ -360,6 +366,10 @@ export const useCatchmentArea = ({
             "weighted"
           );
           const cleaned2 = weightedProcessing.cleaned;
+          if (!isValidGeoJSON(cleaned2)) {
+            alert(t("err_no_reachable_weighted"));
+            return;
+          }
           let weightedArea = weightedProcessing.areaHectares;
           logAccessibilityTiming(
             "weighted",
