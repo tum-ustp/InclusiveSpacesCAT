@@ -5,7 +5,6 @@ import proj4 from "proj4";
 import sty from './MapComponent.module.css'; 
 import {isWmsLayer, buildLayerTypeMap, layerGroupMap} from "./LayerStyleManager";
 import { useTranslation } from "next-i18next";
-import SurveyInvite from "./map/surveyInvite";
 import ReachabilityLayers from "./map/ReachabilityLayers";
 import { useMapInteractions } from "./map/useMapInteractions";
 import { useCatchmentArea } from "./map/useCatchmentArea";
@@ -63,8 +62,6 @@ const MapComponent = ({
   onScreenshotAvailabilityChange,
   onGeoJsonDownloadReady,
   onGeoJsonDownloadAvailabilityChange,
-  onSurveyOpenReady,
-  onSurveyAvailabilityChange,
 }) => {
   const [MapModule, setMapModule] = useState(null);
   const [customMarkerIcon, setCustomMarkerIcon] = useState(null);
@@ -113,7 +110,6 @@ const MapComponent = ({
     reachableHullData,
     isCalculating,
     resultMetadata,
-    surveyInviteTrigger,
     calcElapsed,
     calcStage,
     isValidGeoJSON,
@@ -472,13 +468,6 @@ const MapComponent = ({
           />
         </div>
       )}
-
-      <SurveyInvite
-        city={selectedCity}
-        trigger={surveyInviteTrigger}
-        onSurveyOpenReady={onSurveyOpenReady}
-        onSurveyAvailabilityChange={onSurveyAvailabilityChange}
-      />
 
       <p id="map-kbd-desc" className={sty.srOnly}>
         {t("sr_map_keyboard_instructions")}

@@ -60,7 +60,6 @@ export const useCatchmentArea = ({
   const [defaultResultCache, setDefaultResultCache] = useState({}); // key: `${lat},${lon}`, value: {roads, hull, area}
   const [, setDefaultGroupIndex] = useState(1);  // default group index for the first result
   const [groupMapping, setGroupMapping] = useState({}); // mapping of group index to default results,index for weighted results
-  const [surveyInviteTrigger, setSurveyInviteTrigger] = useState(0);
 
   // show calculating status/timer
   const abortRef = useRef(null);
@@ -72,10 +71,6 @@ export const useCatchmentArea = ({
     setComputeAccessibility(false);
     setIsCalculating(false);
     setCalcStage("");
-  };
-
-  const requestSurveyInvite = () => {
-    setSurveyInviteTrigger((prev) => prev + 1);
   };
 
   // (1) timer (Ns)
@@ -245,7 +240,6 @@ export const useCatchmentArea = ({
       if (startPoints.length === 0) return;
       const [lon, lat] = startPoints[startPoints.length - 1]; // latest point
       const key = `${lat},${lon},${walkingTime},${walkingSpeed}`; //store basic parameters for default catchment area
-      let shouldShowSurveyPrompt = false;
       setIsCalculating(true);
       const controller = new AbortController();
       abortRef.current = controller;
@@ -332,12 +326,10 @@ export const useCatchmentArea = ({
               groupIndex: newGroupIndex
             }
           ]);
-          shouldShowSurveyPrompt = true;
         } else {
           currentGroupIndex = groupMapping[key];
           setDefaultGroupIndex(currentGroupIndex);
           defaultArea = defaultResultCache[key].area;
-          shouldShowSurveyPrompt = true;
         }
 
         // --------- Step 2: Weighted Result (with comfort features) ---------
@@ -415,9 +407,6 @@ export const useCatchmentArea = ({
         setIsCalculating(false);
         setCalcStage("");
         setComputeAccessibility(false);
-        if (shouldShowSurveyPrompt) {
-          requestSurveyInvite();
-        }
       }
     };
 
@@ -431,7 +420,6 @@ export const useCatchmentArea = ({
     reachableHullData,
     isCalculating,
     resultMetadata,
-    surveyInviteTrigger,
     calcElapsed,
     calcStage,
     isValidGeoJSON,

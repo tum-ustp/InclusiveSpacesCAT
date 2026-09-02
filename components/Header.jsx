@@ -10,8 +10,6 @@ function Header(
     showHelp,
     setShowHelp = () => {},
     variant = "map", // "map" or "landing"
-    canOpenSurvey = false,
-    onOpenSurvey,
   },
   ref
 ) {
@@ -315,17 +313,6 @@ function Header(
           ))}
         </ul>
       </nav>
-      {variant === "map" && canOpenSurvey && (
-        <button
-          type="button"
-          className={`${sty.surveyButton} ${sty.focusRing}`}
-          onClick={onOpenSurvey}
-          aria-haspopup="dialog"
-          aria-controls="survey-prompt-title"
-        >
-          {t("survey_prompt_reopen")}
-        </button>
-      )}
       {/* map page show "help" button */}
       {variant === "map" && (
         <button

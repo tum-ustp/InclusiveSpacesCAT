@@ -567,11 +567,6 @@
   "legend_without_factors": "(without discomfort factors)",
   "alert_no_area_time_speed": "No reachable area found for this walking time/speed. Please try another setting.",
   "alert_no_area_comfort": "The selected comfort settings result in no reachable area. Try adjusting the sliders.",
-  "survey_prompt_title": "Feedback welcome!",
-  "survey_prompt_question": "Have you tried CAT?",
-  "survey_prompt_body": "Help us improve the tool.",
-  "survey_prompt_link_intro": "To the survey:",
-  "survey_prompt_reopen": "Survey",
   
   "display_noise": "Noise", 
   "display_light": "Street Lights",

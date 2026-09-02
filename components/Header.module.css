@@ -194,26 +194,6 @@
   display: block;
 }
 
-.surveyButton {
-  align-self: center;
-  min-height: 32px;
-  padding: 5px 12px;
-  margin-right: 12px;
-  border: 2px solid #5045a0;
-  border-radius: 6px;
-  background: #f5f5f5;
-  color: #5045a0;
-  font: inherit;
-  font-size: 14px;
-  font-weight: 700;
-  line-height: 1.1;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.surveyButton:hover {
-  background: #f0eefc;
-}
 /* ----------------- Modal styles -------------------*/
 .modal-overlay {
   position: fixed;

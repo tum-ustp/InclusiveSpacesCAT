@@ -497,8 +497,6 @@ export const exportMapScreenshot = async ({
   await waitForPaint();
 
   const restore = hideDuringExport([
-    ".surveyOverlay",
-    ".surveyReopenButton",
     "#profile",
     ".profilePanel",
     ".profileMainBox",
