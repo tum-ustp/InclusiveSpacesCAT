@@ -28,6 +28,16 @@ const CITY_CENTERS = {
   penteli: [38.0491, 23.8653],
 };
 
+const getInitialCity = () => {
+  if (typeof window === "undefined") return "hamburg";
+  const queryCity = new URLSearchParams(window.location.search)
+    .get("city")
+    ?.toLowerCase();
+  const storedCity = localStorage.getItem("selectedCity")?.toLowerCase();
+  const city = queryCity || storedCity || "hamburg";
+  return cityLayerConfig[city] ? city : "hamburg";
+};
+
 createPlasmicElementProxy;
 
 export const PlasmicUser__VariantProps = [];
@@ -58,8 +68,10 @@ function PlasmicUser__RenderFunc(props) {
   const [clearTrigger, setClearTrigger] = React.useState(false);
   const [sidebarOpen, setSidebarOpen] = React.useState(true);
   const [highlightedIndex, setHighlightedIndex] = React.useState(null);
-  const [selectedCity, setSelectedCity] = React.useState("hamburg");
-  const [cityCenter, setCityCenter] = React.useState([53.5503, 9.9920]); // hamburg as default
+  const [selectedCity, setSelectedCity] = React.useState(getInitialCity);
+  const [cityCenter, setCityCenter] = React.useState(
+    () => CITY_CENTERS[getInitialCity()] || CITY_CENTERS.hamburg
+  );
   const [isSearchZoom, setIsSearchZoom] = React.useState(false);
   const [canDownloadScreenshot, setCanDownloadScreenshot] = React.useState(false);
   const [isDownloadingScreenshot, setIsDownloadingScreenshot] = React.useState(false);

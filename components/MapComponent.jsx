@@ -83,8 +83,7 @@ const MapComponent = ({
     (typeof window !== "undefined" &&
       (localStorage.getItem("selectedCity") || "hamburg")) ||
     "hamburg";
-  const [storedSelectedCity] = useState(getSelectedCity);
-  const selectedCity = selectedCityProp || storedSelectedCity;
+  const selectedCity = selectedCityProp || getSelectedCity();
 
   const mapRegionLabel = t("aria_map_region");
 
