@@ -78,6 +78,7 @@ const runRequest = async (index, mode) => {
   const params = new URLSearchParams({
     requestId,
     queueGroupId,
+    queueGroupSize: "2",
     city,
     lat: point.lat,
     lon: point.lon,
@@ -103,7 +104,7 @@ const runRequest = async (index, mode) => {
     const response = await fetch(url, { signal: controller.signal });
     const text = await response.text();
     const endedAt = performance.now();
-    let body = null;
+    let body;
 
     try {
       body = text ? JSON.parse(text) : null;

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import * as turf from "@turf/turf";
 import { layerGroupMap } from "../LayerStyleManager";
 import {
@@ -65,14 +65,14 @@ export const useCatchmentArea = ({
   const [calcElapsed, setCalcElapsed] = useState(0);
   const [calcStage, setCalcStage] = useState("");
   const [calcQueueStatus, setCalcQueueStatus] = useState(null);
-  const cancelCalculation = () => {
+  const cancelCalculation = useCallback(() => {
     abortRef.current?.abort();
     abortRef.current = null;
     setComputeAccessibility(false);
     setIsCalculating(false);
     setCalcStage("");
     setCalcQueueStatus(null);
-  };
+  }, [setComputeAccessibility]);
 
   // (1) timer (Ns)
   useEffect(() => {
@@ -98,7 +98,7 @@ export const useCatchmentArea = ({
     };
     window.addEventListener("keydown", onKeyDown, true);
     return () => window.removeEventListener("keydown", onKeyDown, true);
-  }, [isCalculating]);
+  }, [isCalculating, cancelCalculation]);
 
   // clean "get catchment area" result
   useEffect(() => {
@@ -122,6 +122,8 @@ export const useCatchmentArea = ({
     variableSettings,
     signal,
     mode = "default",
+    queueGroupId,
+    queueGroupSize = 1,
   }) => {
     try {
       const selected = enabledVariables || [];
@@ -156,6 +158,10 @@ export const useCatchmentArea = ({
       params.append("geometry", ACCESSIBILITY_GEOMETRY_MODE);
       params.append("mode", mode);
       params.append("requestId", requestId);
+      if (queueGroupId) {
+        params.append("queueGroupId", queueGroupId);
+        params.append("queueGroupSize", String(queueGroupSize));
+      }
 
       const runId = `${mode}-${Date.now()}`;
       const startMark = `accessibility-fetch-start-${runId}`;
@@ -252,8 +258,7 @@ export const useCatchmentArea = ({
       for (const layer of poiLayers) {
         try {
           const res = await fetch(`/data/POI/${layer}.geojson`);
-          const data = await res.json();
-          newData[layer] = data;
+          newData[layer] = await res.json();
         } catch (err) {
           console.error("Failed to load:", layer, err);
         }
@@ -266,7 +271,7 @@ export const useCatchmentArea = ({
     };
 
     loadPOIGeoJsons();
-  }, [selectedCity]);
+  }, [selectedCity, setGeoJsonData]);
 
   // Perform reachability analysis, calculate road features and hulls
   useEffect(() => {
@@ -274,17 +279,21 @@ export const useCatchmentArea = ({
       if (startPoints.length === 0) return;
       const [lon, lat] = startPoints[startPoints.length - 1]; // latest point
       const key = `${lat},${lon},${walkingTime},${walkingSpeed}`; //store basic parameters for default catchment area
+      const needsDefaultCalculation = !defaultResultCache[key];
       setIsCalculating(true);
       const controller = new AbortController();
       abortRef.current = controller;
       setCalcStage(t('loading'));
+      const queueGroupId = `analysis-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      const queueGroupSize = needsDefaultCalculation && enabledVariables.length > 0 ? 2 : 1;
 
       try {
         let defaultArea;
         let currentGroupIndex;
+        let weightedResPromise = null;
 
         // --------- Step 1: Default Reslut (only speed/time/start) ---------
-        if (!defaultResultCache[key]) {
+        if (needsDefaultCalculation) {
           const newGroupIndex = Object.keys(groupMapping).length + 1;
           setGroupMapping(prev => ({ ...prev, [key]: newGroupIndex }));
           setDefaultGroupIndex(newGroupIndex);
@@ -296,6 +305,20 @@ export const useCatchmentArea = ({
             temperatureSummer: 1, temperatureWinter: 1
           };
 
+          if (enabledVariables.length > 0) {
+            weightedResPromise = fetchAccessibilityFromBackend({
+              lat,
+              lon,
+              time: walkingTime,
+              speed: walkingSpeed,
+              variableSettings: layerValues,
+              signal: controller.signal,
+              mode: "weighted",
+              queueGroupId,
+              queueGroupSize,
+            });
+          }
+
           const defaultRes = await fetchAccessibilityFromBackend({
             lat,
             lon,
@@ -304,6 +327,8 @@ export const useCatchmentArea = ({
             variableSettings: defaultVars,
             signal: controller.signal,
             mode: "default",
+            queueGroupId,
+            queueGroupSize,
           });
           if (!defaultRes || !defaultRes.polygon) {
             alert(t("err_api_failed_try_again"));
@@ -367,15 +392,19 @@ export const useCatchmentArea = ({
 
         // --------- Step 2: Weighted Result (with comfort features) ---------
         if (enabledVariables.length > 0) {
-          const weightedRes = await fetchAccessibilityFromBackend({
-            lat,
-            lon,
-            time: walkingTime,
-            speed: walkingSpeed,
-            variableSettings: layerValues,
-            signal: controller.signal,
-            mode: "weighted",
-          });
+          const weightedRes = weightedResPromise
+            ? await weightedResPromise
+            : await fetchAccessibilityFromBackend({
+              lat,
+              lon,
+              time: walkingTime,
+              speed: walkingSpeed,
+              variableSettings: layerValues,
+              signal: controller.signal,
+              mode: "weighted",
+              queueGroupId,
+              queueGroupSize,
+            });
           if (!weightedRes || !weightedRes.polygon) {
             alert(t("err_api_failed_try_again"));
             return;

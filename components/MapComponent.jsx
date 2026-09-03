@@ -1,5 +1,4 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
-import dynamic from "next/dynamic";
 import "leaflet/dist/leaflet.css"; 
 import proj4 from "proj4"; 
 import sty from './MapComponent.module.css'; 
@@ -8,12 +7,6 @@ import { useTranslation } from "next-i18next";
 import ReachabilityLayers from "./map/ReachabilityLayers";
 import { useMapInteractions } from "./map/useMapInteractions";
 import { useCatchmentArea } from "./map/useCatchmentArea";
-
-// Dynamic import for react-leaflet
-const MapLib = dynamic(
-  () => import("react-leaflet"),
-  { ssr: false }
-); 
 
 proj4.defs("EPSG:4326", "+proj=longlat +datum=WGS84 +no_defs");
 proj4.defs("EPSG:25832", "+proj=utm +zone=32 +ellps=WGS84 +datum=WGS84 +units=m +no_defs");
@@ -53,7 +46,6 @@ const MapComponent = ({
   clearTrigger,
   onClearHandled,
   layerValues,
-  onFocusArea,
   highlightedIndex,
   setHighlightedIndex,
   isSearchZoom, 
@@ -303,7 +295,7 @@ const MapComponent = ({
       setStartPoints([]); 
       onResetHandled && onResetHandled(); 
     }
-  }, [resetTrigger, onResetHandled]);  
+  }, [resetTrigger, onResetHandled, setStartPoints]);  
 
   // Load GeoJSON data for the selected layers (sidebar map layers)
   useEffect(() => {
@@ -356,7 +348,8 @@ const MapComponent = ({
           const result = await layerRequests.get(layer);
           if (cancelled) return;
           if (result.error) {
-            throw result.error;
+            console.error("Failed to load:", layer, result.error);
+            continue;
           }
           setGeoJsonData((prev) => ({
             ...prev,

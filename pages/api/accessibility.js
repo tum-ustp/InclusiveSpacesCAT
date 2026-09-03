@@ -4,7 +4,7 @@ import {
   finishAccessibilityQueueTurn,
   getAccessibilityQueueStatus,
   waitForAccessibilityQueueTurn,
-} from "../../lib/accessibilityQueue";
+} from "@/lib/accessibilityQueue";
 
 const { Pool } = pg;
 let pool;
@@ -43,7 +43,7 @@ const CITY_CONFIG = {
     verticesGeomColumn: "the_geom",
     supportsWeightedCosts: true,
     simplifyTolerance: 0.00006,
-    bufferMeters: 100,
+    bufferMeters: 80,
   },
   munich: {
     waysTable: "muc_ways_noded_4326_v2",
@@ -313,7 +313,7 @@ export const buildAccessibilityGeometryQuery = ({
 
 export default async function handler(req, res) {
   const requestStart = performance.now();
-  const { lat, lon, time, speed, city, geometry, requestId, queueGroupId, queueStatusId } = req.query;
+  const { lat, lon, time, speed, city, geometry, requestId, queueGroupId, queueGroupSize, queueStatusId } = req.query;
 
   if (typeof queueStatusId === "string" && queueStatusId) {
     return res.status(200).json(getAccessibilityQueueStatus(queueStatusId));
@@ -342,15 +342,30 @@ export default async function handler(req, res) {
   let queueTicket = null;
 
   try {
-    queueTicket = await waitForAccessibilityQueueTurn(queueRequestId, queueGroupKey);
+    queueTicket = await waitForAccessibilityQueueTurn(
+      queueRequestId,
+      queueGroupKey,
+      queueGroupSize
+    );
 
     const db = getPool();
     const nearestVertexStart = performance.now();
     const nearestVertexResult = await db.query(
       `
-        SELECT id
-        FROM ${cityConfig.verticesTable}
-        ORDER BY ${cityConfig.verticesGeomColumn} <-> ST_SetSRID(ST_MakePoint($1, $2), 4326)
+        WITH input_point AS (
+          SELECT ST_SetSRID(ST_MakePoint($1, $2), 4326) AS geom
+        ),
+        nearest_way AS (
+          SELECT w.source, w.target
+          FROM ${cityConfig.waysTable} w, input_point
+          ORDER BY w.${cityConfig.waysGeomColumn} <-> input_point.geom
+          LIMIT 1
+        )
+        SELECT v.id
+        FROM ${cityConfig.verticesTable} v
+        JOIN nearest_way w ON v.id IN (w.source, w.target)
+        CROSS JOIN input_point
+        ORDER BY v.${cityConfig.verticesGeomColumn} <-> input_point.geom
         LIMIT 1;
       `,
       [lon, lat]
