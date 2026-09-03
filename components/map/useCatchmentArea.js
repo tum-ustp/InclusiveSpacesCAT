@@ -290,7 +290,6 @@ export const useCatchmentArea = ({
       try {
         let defaultArea;
         let currentGroupIndex;
-        let weightedResPromise = null;
 
         // --------- Step 1: Default Reslut (only speed/time/start) ---------
         if (needsDefaultCalculation) {
@@ -304,20 +303,6 @@ export const useCatchmentArea = ({
             tactile_pavement: 1, tree: 1,
             temperatureSummer: 1, temperatureWinter: 1
           };
-
-          if (enabledVariables.length > 0) {
-            weightedResPromise = fetchAccessibilityFromBackend({
-              lat,
-              lon,
-              time: walkingTime,
-              speed: walkingSpeed,
-              variableSettings: layerValues,
-              signal: controller.signal,
-              mode: "weighted",
-              queueGroupId,
-              queueGroupSize,
-            });
-          }
 
           const defaultRes = await fetchAccessibilityFromBackend({
             lat,
@@ -392,9 +377,7 @@ export const useCatchmentArea = ({
 
         // --------- Step 2: Weighted Result (with comfort features) ---------
         if (enabledVariables.length > 0) {
-          const weightedRes = weightedResPromise
-            ? await weightedResPromise
-            : await fetchAccessibilityFromBackend({
+          const weightedRes = await fetchAccessibilityFromBackend({
               lat,
               lon,
               time: walkingTime,
