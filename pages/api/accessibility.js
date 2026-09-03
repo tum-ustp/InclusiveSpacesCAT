@@ -8,6 +8,7 @@ import {
 
 const { Pool } = pg;
 let pool;
+const ACCESSIBILITY_ROUTING_LOCK_KEY = 424242;
 
 const getPool = () => {
   if (!process.env.DATABASE_URL) {
@@ -399,41 +400,56 @@ export default async function handler(req, res) {
     const pedestrianFlowVariable = parseValue(req.query.pedestrianFlow);
 
     const routingQueryStart = performance.now();
-    const result = await db.query(
-      buildAccessibilityGeometryQuery({
-        cityConfig,
-        mode,
-        weights: {
-          noise: noiseVariable,
-          light: lightVariable,
-          trafficLight: trafficLightVariable,
-          tactile: tactileVariable,
-          tree: treeVariable,
-          temperatureSummer: temperatureSummerVariable,
-          temperatureWinter: temperatureWinterVariable,
-          blueinf: blueinfVariable,
-          greeninf: greeninfVariable,
-          station: stationVariable,
-          wcDisabled: wcDisabledVariable,
-          narrowRoads: narrowRoadsVariable,
-          stair: stairVariable,
-          obstacle: obstacleVariable,
-          slope: slopeVariable,
-          unevenSurface: unevenSurfaceVariable,
-          poorPavement: poorPavementVariable,
-          kerbsHigh: kerbsHighVariable,
-          facility: facilityVariable,
-          pedestrianFlow: pedestrianFlowVariable,
-        },
-      }),
-      [
-        startVid,
-        maxDistance,
-        geometryMode,
-        cityConfig.simplifyTolerance,
-        bufferMeters,
-      ]
-    );
+    const routingClient = await db.connect();
+    let result;
+
+    try {
+      await routingClient.query("BEGIN");
+      await routingClient.query("SELECT pg_advisory_xact_lock($1)", [
+        ACCESSIBILITY_ROUTING_LOCK_KEY,
+      ]);
+      result = await routingClient.query(
+        buildAccessibilityGeometryQuery({
+          cityConfig,
+          mode,
+          weights: {
+            noise: noiseVariable,
+            light: lightVariable,
+            trafficLight: trafficLightVariable,
+            tactile: tactileVariable,
+            tree: treeVariable,
+            temperatureSummer: temperatureSummerVariable,
+            temperatureWinter: temperatureWinterVariable,
+            blueinf: blueinfVariable,
+            greeninf: greeninfVariable,
+            station: stationVariable,
+            wcDisabled: wcDisabledVariable,
+            narrowRoads: narrowRoadsVariable,
+            stair: stairVariable,
+            obstacle: obstacleVariable,
+            slope: slopeVariable,
+            unevenSurface: unevenSurfaceVariable,
+            poorPavement: poorPavementVariable,
+            kerbsHigh: kerbsHighVariable,
+            facility: facilityVariable,
+            pedestrianFlow: pedestrianFlowVariable,
+          },
+        }),
+        [
+          startVid,
+          maxDistance,
+          geometryMode,
+          cityConfig.simplifyTolerance,
+          bufferMeters,
+        ]
+      );
+      await routingClient.query("COMMIT");
+    } catch (error) {
+      await routingClient.query("ROLLBACK").catch(() => {});
+      throw error;
+    } finally {
+      routingClient.release();
+    }
     const routingQueryMs = performance.now() - routingQueryStart;
     const reachableEdgeSelectionMs = Math.max(
       0,
