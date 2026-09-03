@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
 const apiFile = new URL("../pages/api/accessibility.js", import.meta.url);
+const queueFile = new URL("../lib/accessibilityQueue.js", import.meta.url);
 
 test("accessibility API contains the server buffer geometry pipeline", async () => {
   const src = await readFile(apiFile, "utf8");
@@ -38,4 +39,11 @@ test("server timing exports the requested server-side breakdown", async () => {
   assert.match(src, /Server-Timing/);
   assert.match(src, /geometry-union;dur=/);
   assert.match(src, /geojson-serialization;dur=/);
+});
+
+test("accessibility queue releases a group when no requests are running", async () => {
+  const src = await readFile(queueFile, "utf8");
+
+  assert.match(src, /group\.running\s*=\s*Math\.max\(0,\s*group\.running\s*-\s*1\)/);
+  assert.match(src, /if\s*\(\s*group\.running\s*===\s*0\s*\)\s*{/);
 });

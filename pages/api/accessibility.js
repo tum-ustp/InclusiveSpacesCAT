@@ -77,6 +77,27 @@ export const buildFinalRoadsGeometrySql = (geomColumn) => `
     )
   `;
 
+const runWithAccessibilityRoutingLock = async (pool, queryText, queryParams) => {
+  const client = await pool.connect();
+  let committed = false;
+
+  try {
+    await client.query("BEGIN");
+    await client.query("SELECT pg_advisory_xact_lock($1)", [
+      ACCESSIBILITY_ROUTING_LOCK_KEY,
+    ]);
+    const result = await client.query(queryText, queryParams);
+    await client.query("COMMIT");
+    committed = true;
+    return result;
+  } finally {
+    if (!committed) {
+      await client.query("ROLLBACK").catch(() => {});
+    }
+    client.release();
+  }
+};
+
 const buildWeightedCostSql = (weights, tableAlias = "") => {
   const columnPrefix = tableAlias ? `${tableAlias}.` : "";
 
@@ -130,10 +151,7 @@ export const buildAccessibilityGeometryQuery = ({
       : "c.cost";
 
   return `
-        WITH accessibility_lock AS (
-          SELECT pg_advisory_xact_lock($6)
-        ),
-        dd AS (
+        WITH dd AS (
           SELECT *
           FROM pgr_drivingDistance(
             '${edgeSql.replace(/'/g, "''")}',
@@ -302,7 +320,6 @@ export const buildAccessibilityGeometryQuery = ({
           network_payload_stats.feature_count AS network_feature_count,
           network_payload_stats.total_points AS network_total_points
         FROM raw_payload_stats
-        CROSS JOIN accessibility_lock
         CROSS JOIN output_payload_stats
         CROSS JOIN network_payload_stats
         LEFT JOIN geometry_for_output go ON TRUE
@@ -404,7 +421,8 @@ export default async function handler(req, res) {
     const pedestrianFlowVariable = parseValue(req.query.pedestrianFlow);
 
     const routingQueryStart = performance.now();
-    const result = await db.query(
+    const result = await runWithAccessibilityRoutingLock(
+      db,
       buildAccessibilityGeometryQuery({
         cityConfig,
         mode,
@@ -436,8 +454,7 @@ export default async function handler(req, res) {
         maxDistance,
         geometryMode,
         cityConfig.simplifyTolerance,
-        bufferMeters,
-        ACCESSIBILITY_ROUTING_LOCK_KEY,
+        bufferMeters
       ]
     );
     const routingQueryMs = performance.now() - routingQueryStart;
