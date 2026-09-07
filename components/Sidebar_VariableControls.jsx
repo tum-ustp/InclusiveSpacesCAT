@@ -19,6 +19,7 @@ function FeatureCheckbox({
   t,
 }) {
   const sliderIndex = weightLevels.indexOf(value);
+  const sliderValue = sliderIndex >= 0 ? weightLevels[sliderIndex] : null;
   const [showTooltip, setShowTooltip] = React.useState(false);
   const tooltipRef = React.useRef();
   const sliderId = `var-${layer}-slider`;
@@ -121,7 +122,12 @@ function FeatureCheckbox({
           }}
         />
         <span className={sty["slider-value"]} aria-hidden="true">
-          {sliderIndex >= 0 ? weightLabels[sliderIndex] : "-"}
+          <span className={sty["slider-emoji"]}>
+            {sliderIndex >= 0 ? weightLabels[sliderIndex] : "-"}
+          </span>
+          <span className={sty["slider-number"]}>
+            {sliderValue !== null ? sliderValue.toFixed(1) : "-"}
+          </span>
         </span>
         <span className={sty["srOnly"]}>
           {sliderIndex >= 0 ? weightTexts[sliderIndex] : t('emoji_level_unknown')}
@@ -255,18 +261,22 @@ export default function VariableControls({
         <div className={sty["legend-emoji-column"]}>
           <div className={sty["legend-emoji-item"]}>
             <span className={sty["legend-emoji"]} aria-hidden="true">❌</span>
+            <span className={sty["legend-number"]}>{weightLevels[3].toFixed(1)}</span>
             <span className={sty["legend-label"]}>{t('emoji_level_1')}</span>
           </div>
           <div className={sty["legend-emoji-item"]}>
             <span className={sty["legend-emoji"]} aria-hidden="true">😩</span>
+            <span className={sty["legend-number"]}>{weightLevels[2].toFixed(1)}</span>
             <span className={sty["legend-label"]}>{t('emoji_level_2')}</span>
           </div>
           <div className={sty["legend-emoji-item"]}>
             <span className={sty["legend-emoji"]} aria-hidden="true">☹️</span>
+            <span className={sty["legend-number"]}>{weightLevels[1].toFixed(1)}</span>
             <span className={sty["legend-label"]}>{t('emoji_level_3')}</span>
           </div>
           <div className={sty["legend-emoji-item"]}>
             <span className={sty["legend-emoji"]} aria-hidden="true">😐</span>
+            <span className={sty["legend-number"]}>{weightLevels[0].toFixed(1)}</span>
             <span className={sty["legend-label"]}>{t('emoji_level_4')}</span>
           </div>
         </div>
