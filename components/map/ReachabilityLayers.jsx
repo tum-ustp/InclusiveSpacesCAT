@@ -46,6 +46,17 @@ const ReachabilityLayers = ({
           }}
         />
       )}
+      {cityBoundaries.munich && (
+        <GeoJSON
+          data={cityBoundaries.munich}
+          style={{
+            color: "#846bfb",
+            weight: 2,
+            fillOpacity: 0,
+            dashArray: "5,5"
+          }}
+        />
+      )}
 
       {/* Render WMS layers based on selectedLayers */}
       {selectedLayers.map((layer) => {

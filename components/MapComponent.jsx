@@ -263,9 +263,10 @@ const MapComponent = ({
   useEffect(() => {
     Promise.all([
       fetch(`/data/penteli/penteli_boundary.geojson`).then(res => res.json()),
-      fetch(`/data/hamburg/hamburg_boundary.geojson`).then(res => res.json())
-    ]).then(([pt, hh]) => {
-      setCityBoundaries({ hamburg: hh, penteli: pt });
+      fetch(`/data/hamburg/hamburg_boundary.geojson`).then(res => res.json()),
+      fetch(`/data/munich/munich_boundary.geojson`).then(res => res.json())
+    ]).then(([pt, hh, muc]) => {
+      setCityBoundaries({ hamburg: hh, penteli: pt, munich: muc });
     });
   }, []);
 

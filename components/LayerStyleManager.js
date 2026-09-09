@@ -279,6 +279,22 @@ export function NoiseWMSLayer() {
   return null;
 }
 
+export function MunichNoiseWMSLayer() {
+  const map = useMap();
+  useEffect(() => {
+    const layer = L.tileLayer.wms("https://www.lfu.bayern.de/gdi/wms/laerm/ballungsraeume", {
+      layers: "aggroadlden2022",
+      format: "image/png",
+      transparent: true,
+      version: "1.3.0",
+      attribution: "LfU Bayern"
+    });
+    layer.addTo(map);
+    return () => map.removeLayer(layer);
+  }, [map]);
+  return null;
+}
+
 export function TreeWMSLayer() {
   const map = useMap();
   useEffect(() => {
@@ -401,6 +417,7 @@ export function PedestrianFlowWMSLayer() {
 
 export const wmsLayerComponents = {
   noise_wms: NoiseWMSLayer,
+  munich_noise_wms: MunichNoiseWMSLayer,
   tree_wms: TreeWMSLayer,
   trafic_light_wms: TraficLightWMSLayer,
   blue_infrastructure_wms: BlueInfWMSLayer,

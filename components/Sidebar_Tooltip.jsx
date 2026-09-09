@@ -206,6 +206,31 @@ function contentFor(type, t, city) {
   if (type.startsWith("layer:")) {
     const tp = type;
     const key = tp.slice(6);
+
+    if (city === "munich" && key === "munich_noise_wms") {
+      const source = "© Bayerisches Landesamt für Umwelt, LfU. Lärm in Ballungsräumen - WMS, 2022, layer “Straßen gesamt LDEN 2022”.";
+
+      return (
+        <div className={sty["tooltip-content"]}>
+          <div className={sty["tooltip-title"]}>
+            {t("tooltip_layer.munich_noise_wms.title")}
+          </div>
+          <div>
+            <b>
+              {t("tooltip_data_source_label", { defaultValue: "Source:" })}
+            </b>{" "}
+            {source}
+          </div>
+          <div className={sty["tooltip-description"]}>
+            {t("tooltip_layer.munich_noise_wms.desc")}
+          </div>
+          <div className={sty["tooltip-description"]}>
+            {t("tooltip_layer.munich_noise_wms.calculation")}
+          </div>
+        </div>
+      );
+    }
+
     const tooltipKey =
       city === "munich" && key === "trafic_light_wms"
         ? "munich_trafic_light_wms"

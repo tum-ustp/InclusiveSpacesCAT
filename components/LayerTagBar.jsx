@@ -20,6 +20,7 @@ export default function LayerTagBar({
 
   const displayNames = {
     noise_wms: t('display_noise'),
+    munich_noise_wms: t('display_noise'),
     tree_wms: t('display_tree'),
     trafic_light_wms: t('display_traffic'),
     streetlight: t('display_light'),
@@ -212,6 +213,37 @@ export default function LayerTagBar({
               symbol: "image",
               src: "/legends/munich/traffic-light.png"
             }
+          ],
+          munich_noise_wms: [
+            {
+              label: "55-59 dB(A)",
+              symbol: "square",
+              color: "#E2F2BF"
+            },
+            {
+              label: "60-64 dB(A)",
+              symbol: "square",
+              color: "#F3C683"
+            },
+            {
+              label: "65-69 dB(A)",
+              symbol: "square",
+              color: "#CD463E"
+            },
+            {
+              label: "70-74 dB(A)",
+              symbol: "square",
+              color: "#75085C"
+            },
+            {
+              label: ">= 75 dB(A)",
+              symbol: "square",
+              color: "#430A4A"
+            },
+            {
+              label: "LDEN 2022 · LfU Bayern",
+              symbol: "text"
+            }
           ]
         }
       : {}),
@@ -247,6 +279,18 @@ export default function LayerTagBar({
             alt=""
             aria-hidden="true"
             className={styles.layerTagIcon}
+          />
+        ) : item.symbol === "text" ? null : item.symbol === "square" ? (
+          <div
+            style={{
+              width: "14px",
+              height: "14px",
+              backgroundColor: item.color,
+              border: "1px solid #999",
+              flexShrink: 0
+            }}
+            aria-hidden="true"
+            role="presentation"
           />
         ) : (
           <div

@@ -429,6 +429,11 @@
       "desc": "Tag-Abend-Nacht-Lärmpegel aus dem © Geoportal Hamburg WMS.",
       "source": "© Geoportal Hamburg (HH_WMS_Strassenverkehr)"
     },
+    "munich_noise_wms": {
+      "title": "Straßenverkehrslärm (LDEN)",
+      "desc": "Dieser Datensatz stellt modellierten Straßenverkehrslärm in München mit dem Indikator LDEN (Tag-Abend-Nacht-Lärmindex) in dB(A) dar. LDEN kombiniert Lärm am Tag (06:00-18:00), am Abend (18:00-22:00) und in der Nacht (22:00-06:00) über 24 Stunden, mit Zuschlägen von +5 dB(A) für den Abend und +10 dB(A) für die Nacht, um die erhöhte Lärmempfindlichkeit zu berücksichtigen.",
+      "calculation": "Für die Erreichbarkeitsberechnungen wurden die LDEN-Werte innerhalb eines 5-m-Puffers um jedes Segment des Straßennetzes gemittelt und diesem Segment zugewiesen. Segmente mit einem Durchschnittswert über 65 dB(A) wurden als stark lärmbelastet klassifiziert und als Unbehaglichkeitsfaktor aktiviert. Wenn kein Ausgangswert verfügbar war, wird keine Lärmstrafe angewendet."
+    },
     "temp_summer": {
       "title": "Sommerliche thermische Behaglichkeit",
       "desc": "Dieser Datensatz wurde erstellt, indem lokale Messpunkte der thermischen Behaglichkeit in ein 100×100 m Raster umgewandelt wurden, um räumliche Variationen der sommerlichen Wärmebelastung darzustellen.",
