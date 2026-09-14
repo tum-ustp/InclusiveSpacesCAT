@@ -48,12 +48,13 @@ export const cityLayerConfig = {
     ]
   },
   munich: {
-    discomfortFeatures: ["noise", "light", "trafficLight", "tactile_pavement"],
+    discomfortFeatures: ["noise", "light", "trafficLight", "tactile_pavement", "facility"],
     mapLayers: [
       { key: "munich_noise_wms", type: "wms" },
       { key: "munich_lighting", type: "geojson" },
       { key: "trafic_light_wms", type: "wms" },
-      { key: "tactile_guidance", type: "geojson" }
+      { key: "tactile_guidance", type: "geojson" },
+      { key: "facility_muc", type: "geojson" }
     ]
   }
   // other cities...

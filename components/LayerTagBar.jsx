@@ -1,7 +1,11 @@
 import React from "react";
 import styles from "./Sidebar.module.css"; 
 import { isWmsLayer, buildLayerTypeMap, getStyle, layerGroupMap } from "./LayerStyleManager";
-import { HAMBURG_POI_CONFIG } from "./poiConfig";
+import {
+  FACILITY_POI_COLORS_BY_CATEGORY,
+  HAMBURG_POI_CONFIG,
+  MUNICH_POI_CONFIG,
+} from "./poiConfig";
 import { useTranslation } from 'next-i18next';
  
 
@@ -40,6 +44,7 @@ export default function LayerTagBar({
     poor_pavement: t('display_pavement'),
     kerbs_high: t('display_kerb_high'),
     facility_hh: t('display_facility'),
+    facility_muc: t('display_facility'),
     pedestrian_flow_wms: t('display_pedestrian_flow'),
     trafic_light: t('display_traffic'),
     green_infrastructure: t('display_green_inf'),
@@ -99,7 +104,13 @@ export default function LayerTagBar({
     poi_hh_kita_schule: t("leg_poi_education"),
     poi_hh_uni_fh: t("leg_poi_education"),
     poi_hh_park_spiel: t("leg_poi_park_spiel"),
-    poi_hh_supermarket: t("leg_poi_supermarket")
+    poi_hh_supermarket: t("leg_poi_supermarket"),
+    poi_muc_gastronomy: t("leg_poi_gastronomy"),
+    poi_muc_health: t("leg_poi_health"),
+    poi_muc_kita_schule: t("leg_poi_education"),
+    poi_muc_uni_fh: t("leg_poi_education"),
+    poi_muc_park_spiel: t("leg_poi_park_spiel"),
+    poi_muc_supermarket: t("leg_poi_supermarket")
   };
 
   // icon for wms layers
@@ -155,22 +166,29 @@ export default function LayerTagBar({
     // noise_wms: ["Noise Levels"]
   };
 
-  const facilitiesLegendItems = Array.from(
+  const buildFacilityLegendItems = (items) => Array.from(
     new Map(
-      HAMBURG_POI_CONFIG.map((item) => [
-        `${poiLegendLabelByKey[item.key] || item.label}-${item.color}`,
-        {
-          label: poiLegendLabelByKey[item.key] || item.label,
-          color: item.color
-        }
-      ])
+      items.map((item) => {
+        const color = FACILITY_POI_COLORS_BY_CATEGORY[item.category];
+        return [
+          `${poiLegendLabelByKey[item.key] || item.label}-${color}`,
+          {
+            label: poiLegendLabelByKey[item.key] || item.label,
+            color
+          }
+        ];
+      })
     ).values()
   );
+  const hamburgFacilitiesLegendItems = buildFacilityLegendItems(HAMBURG_POI_CONFIG);
+  const munichFacilitiesLegendItems = buildFacilityLegendItems(MUNICH_POI_CONFIG);
   const facilityPalette = {
-    facility_hh: facilitiesLegendItems.map((item) => item.color)
+    facility_hh: hamburgFacilitiesLegendItems.map((item) => item.color),
+    facility_muc: munichFacilitiesLegendItems.map((item) => item.color)
   };
   const facilityLabels = {
-    facility_hh: facilitiesLegendItems.map((item) => item.label)
+    facility_hh: hamburgFacilitiesLegendItems.map((item) => item.label),
+    facility_muc: munichFacilitiesLegendItems.map((item) => item.label)
   };
   const dotLegendConfigs = [
     { palette: flowPalette, labels: flowLabels, borderColor: "#999" },
@@ -332,7 +350,7 @@ export default function LayerTagBar({
           {/* map layer name */}
           <div
             className={styles.layerTagText}
-            style={layer === "facility_hh" ? { color: "#3A3A3A" } : undefined}
+            style={["facility_hh", "facility_muc"].includes(layer) ? { color: "#3A3A3A" } : undefined}
           >
             {displayNames[layer] || layer}
             <button

@@ -555,6 +555,11 @@
       "desc": "This dataset includes facilities related to education and culture, such as cinemas, theaters, museums, music venues, exhibition spaces, community cultural centers, civic halls, specialized libraries, adult education centers, and religious communities. ",
       "source": "OpenStreetMap, 2025"
     },
+    "facility_muc": {
+      "title": "Public Facilities",
+      "desc": "The dataset combines six POI groups within Munich: gastronomy (amenity=restaurant, cafe, fast_food, pub, bar, biergarten, food_court, ice_cream), hospitals & pharmacies, kindergartens & schools, universities & colleges, parks & playgrounds, and supermarkets.\n\nFor the accessibility catchment calculation, each POI was assigned to the nearest endpoint (source or target) of its nearest street-network segment. Using pgRouting, all network nodes reachable within 300 m along the street network from any POI were identified. Street segments connected to these nodes were assigned facilities_weight = 1; all remaining segments were assigned 0.",
+      "source": "© OpenStreetMap, 2026"
+    },
     "facilities": {
       "title": "Facilities",
       "desc": "Local community, cultural, and educational facilities.",

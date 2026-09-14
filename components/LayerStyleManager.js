@@ -9,7 +9,10 @@ if (typeof window !== "undefined") {
   useMap = require("react-leaflet").useMap;
 }
 import { useEffect } from "react";
-import { HAMBURG_FACILITY_POI_COLORS, HAMBURG_FACILITY_POI_LAYERS } from "./poiConfig";
+import {
+  FACILITY_POI_COLORS_BY_LAYER,
+  FACILITY_POI_LAYERS_BY_CITY,
+} from "./poiConfig";
 
 // Group layers map one UI checkbox to the concrete GeoJSON layers it controls.
 export const layerGroupMap = {
@@ -19,7 +22,8 @@ export const layerGroupMap = {
     "muc_street_lamps_visual",
     "muc_lighting_lit"
   ],
-  facility_hh: HAMBURG_FACILITY_POI_LAYERS
+  facility_hh: FACILITY_POI_LAYERS_BY_CITY.hamburg,
+  facility_muc: FACILITY_POI_LAYERS_BY_CITY.munich
 };
 
 // Build a fast lookup for layer type from availableLayers config [{key,type}, ...]
@@ -233,9 +237,15 @@ export function getStyle(layer, feature) {
     case "poi_hh_park_spiel":
     case "poi_hh_supermarket":
     case "poi_hh_uni_fh":
+    case "poi_muc_gastronomy":
+    case "poi_muc_health":
+    case "poi_muc_kita_schule":
+    case "poi_muc_park_spiel":
+    case "poi_muc_supermarket":
+    case "poi_muc_uni_fh":
       return {
         radius: 5,
-        fillColor: HAMBURG_FACILITY_POI_COLORS[layer] || "#E377C2",
+        fillColor: FACILITY_POI_COLORS_BY_LAYER[layer] || "#E377C2",
         fillOpacity: 0.8,
         stroke: false
       };

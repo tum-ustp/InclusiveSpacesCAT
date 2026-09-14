@@ -215,6 +215,7 @@ export default function MapLayers({ selectedLayers, toggleLayer, availableLayers
           sty={sty}
         >
           {findLayer("facility_hh") && renderCheckbox(findLayer("facility_hh"), t('display_facility'))}
+          {findLayer("facility_muc") && renderCheckbox(findLayer("facility_muc"), t('display_facility'))}
           {findLayer("facilities") && renderCheckbox(findLayer("facilities"), t('display_facility'))}
           {findLayer("pedestrian_flow_wms") && renderCheckbox(findLayer("pedestrian_flow_wms"), t('display_pedestrian_flow'))}
           {findLayer("pedestrian_flow") && renderCheckbox(findLayer("pedestrian_flow"), t('display_pedestrian_flow'))}

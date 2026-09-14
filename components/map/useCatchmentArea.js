@@ -25,6 +25,7 @@ const colorPool = [
 // POI/amenities summary in catchment area
 const POI_LAYER_CONFIG = {
   hamburg: layerGroupMap.facility_hh || [],
+  munich: layerGroupMap.facility_muc || [],
   penteli: [
     "poi_pt_education",
     "poi_pt_gastronomy",
@@ -257,7 +258,8 @@ export const useCatchmentArea = ({
 
       for (const layer of poiLayers) {
         try {
-          const res = await fetch(`/data/POI/${layer}.geojson`);
+          const poiBasePath = selectedCity === "munich" ? "munich" : "POI";
+          const res = await fetch(`/data/${poiBasePath}/${layer}.geojson`);
           newData[layer] = await res.json();
         } catch (err) {
           console.error("Failed to load:", layer, err);

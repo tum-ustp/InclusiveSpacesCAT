@@ -556,6 +556,11 @@
       "desc": "Dieser Datensatz enthält Einrichtungen im Bereich Bildung und Kultur, darunter Kinos, Theater, Museen, Musikstätten, Ausstellungsräume, Stadtteilkulturzentren, Bürgerhäuser, Spezialbibliotheken, Weiterbildungseinrichtungen und religiöse Gemeinschaften.",
       "source": "OpenStreetMap, 2025"
     },
+    "facility_muc": {
+      "title": "Öffentliche Einrichtungen",
+      "desc": "Der Datensatz kombiniert sechs POI-Gruppen in München: Gastronomie (amenity=restaurant, cafe, fast_food, pub, bar, biergarten, food_court, ice_cream), Krankenhäuser & Apotheken, Kitas & Schulen, Universitäten & Hochschulen, Parks & Spielplätze sowie Supermärkte.\n\nFür die Berechnung des Erreichbarkeitsgebiets wurde jeder POI dem nächstgelegenen Endpunkt (source oder target) des nächstgelegenen Straßennetzsegments zugeordnet. Mit pgRouting wurden alle Netzwerkknoten identifiziert, die von einem POI aus innerhalb von 300 m entlang des Straßennetzes erreichbar sind. Straßensegmente, die mit diesen Knoten verbunden sind, erhielten facilities_weight = 1; alle übrigen Segmente erhielten 0.",
+      "source": "© OpenStreetMap, 2026"
+    },
     "facilities": {
       "title": "Einrichtungen",
       "desc": "Lokale Gemeinschafts-, Kultur- und Bildungseinrichtungen.",

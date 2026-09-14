@@ -11,12 +11,12 @@ const Legend = ({ resultMetadata, onFocusArea }) => {
   const [openComfort, setOpenComfort] = React.useState({});
   const [openPoi, setOpenPoi] = React.useState({});
 
-  //temperorial, only show amenities for hamburg (no data for penteli)
+  // Show amenities only for cities with configured POI datasets.
   const city =
     (typeof window !== "undefined" &&
       (localStorage.getItem("selectedCity") || "hamburg")) ||
     "hamburg";
-  const showAmenities = city === "hamburg" || city === "penteli";
+  const showAmenities = city === "hamburg" || city === "penteli" || city === "munich";
 
   const variableDisplayNames = {
     noise: t('checkbox_noise'),
@@ -56,6 +56,12 @@ const Legend = ({ resultMetadata, onFocusArea }) => {
     poi_hh_park_spiel: t("leg_poi_park_spiel"),
     poi_hh_supermarket: t("leg_poi_supermarket"),
     poi_hh_uni_fh: t("leg_poi_uni_fh"),
+    poi_muc_gastronomy: t("leg_poi_gastronomy"),
+    poi_muc_health: t("leg_poi_health"),
+    poi_muc_kita_schule: t("leg_poi_kita_schule"),
+    poi_muc_park_spiel: t("leg_poi_park_spiel"),
+    poi_muc_supermarket: t("leg_poi_supermarket"),
+    poi_muc_uni_fh: t("leg_poi_uni_fh"),
 
     poi_pt_education: t("leg_poi_education"),
     poi_pt_gastronomy: t("leg_poi_gastronomy"),

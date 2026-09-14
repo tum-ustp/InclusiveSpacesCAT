@@ -1213,6 +1213,7 @@
 
   .tooltip-description {
     margin-top: 8px;
+    white-space: pre-line;
   }
 
   .tooltip-list {
