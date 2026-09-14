@@ -63,7 +63,9 @@
   "landing_city_hamburg": "Hamburg",
   "landing_city_hamburg_desc": "Germany’s second-largest city, Hamburg combines historic port landscapes with diverse, walkable urban districts and advanced public transport.",
   "landing_city_penteli": "Penteli",
-  "landing_city_penteli_desc": "Overlooking Athens, Penteli features green residential areas and hilly terrain, shaping its unique accessibility and urban mobility.", 
+  "landing_city_penteli_desc": "Overlooking Athens, Penteli features green residential areas and hilly terrain, shaping its unique accessibility and urban mobility.",
+  "landing_city_munich": "Munich",
+  "landing_city_munich_desc": "Bavaria’s capital and Germany’s third-largest city, Munich combines historic urban districts and abundant green spaces with strong cycling infrastructure and a highly developed public transport system.", 
   "landing_details_title": "Details about CAT",
   "landing_about": "About",
   "landing_details_blocks": [

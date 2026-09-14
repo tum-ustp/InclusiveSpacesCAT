@@ -12,6 +12,7 @@ export default function PlasmicLanding() {
   const cities = [
     { id: "hamburg", name: "Hamburg", logo: "/images/hamburg_logo.png", center: [53.5503, 9.9920] }, 
     { id: "penteli", name: "Penteli", logo: "/images/penteli_logo.png", center: [38.0491, 23.8653] },
+    { id: "munich", name: "Munich", logo: "/images/munich_map.png", center: [48.1372, 11.5756] },
   ];
 
   const [selectedCity, setSelectedCity] = useState("hamburg");
@@ -160,6 +161,35 @@ export default function PlasmicLanding() {
                     </div>
                     <div className={sty.cityRect}>
                       <p>{t('landing_city_penteli_desc')}</p>
+                    </div>
+                  </div>
+
+                  {/* Munich */}
+                  <div
+                    className={sty.cityCardRow}
+                    onClick={() => enterCity("munich", [48.1372, 11.5756])}
+                    role="button"
+                    aria-label={t('landing_city_munich')}
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        enterCity("munich", [48.1372, 11.5756]);
+                      }
+                    }}
+                  >
+                    <div className={sty.cityCircle}>
+                      <span className={sty.cityCircleLabel}>{t('landing_city_munich')}</span>
+                      <img
+                        src="/images/munich_map.png"
+                        alt=""
+                        role="presentation"
+                        aria-hidden="true"
+                        className={sty.cityThumb}
+                      />
+                    </div>
+                    <div className={sty.cityRect}>
+                      <p>{t('landing_city_munich_desc')}</p>
                     </div>
                   </div>
                 </div>

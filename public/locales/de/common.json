@@ -63,7 +63,9 @@
   "landing_city_hamburg": "Hamburg",
   "landing_city_hamburg_desc": "Als zweitgrößte Stadt Deutschlands vereint Hamburg historische Hafenlandschaften mit vielfältigen, fußläufigen Stadtvierteln und einem modernen öffentlichen Verkehrssystem.",
   "landing_city_penteli": "Penteli",
-  "landing_city_penteli_desc": "Penteli, nördlich von Athen, bietet grüne Wohngebiete und hügeliges Gelände, was die Zugänglichkeit und städtische Mobilität einzigartig prägt.", 
+  "landing_city_penteli_desc": "Penteli, nördlich von Athen, bietet grüne Wohngebiete und hügeliges Gelände, was die Zugänglichkeit und städtische Mobilität einzigartig prägt.",
+  "landing_city_munich": "München",
+  "landing_city_munich_desc": "Als Hauptstadt Bayerns und drittgrößte Stadt Deutschlands verbindet München historische Stadtviertel und zahlreiche Grünflächen mit einer starken Fahrradinfrastruktur und einem sehr gut ausgebauten öffentlichen Verkehrssystem.", 
   "landing_details_title": "Details über das CAT",
   "landing_about": "Über",
   "landing_details_blocks": [
