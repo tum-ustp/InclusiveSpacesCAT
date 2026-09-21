@@ -39,6 +39,14 @@ const canvasToBlob = (canvas) =>
     }, "image/png");
   });
 
+const loadImage = (src) =>
+  new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error(`Unable to load image: ${src}`));
+    image.src = src;
+  });
+
 const hideDuringExport = (selectors) => {
   const nodes = Array.from(document.querySelectorAll(selectors.join(",")));
   const previous = nodes.map((node) => ({
@@ -342,6 +350,48 @@ const renderLegend = async (canvas, rootElement, baseRect, resultMetadata) => {
   }
 };
 
+const renderExportLogos = async (canvas) => {
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return;
+
+  try {
+    const [catLogo, inclusiveLogo] = await Promise.all([
+      loadImage("/images/CAT_dark_Purple.png"),
+      loadImage("/images/logoIS_full.png"),
+    ]);
+
+    const padding = 14;
+    const gap = 12;
+    const catHeight = 42;
+    const inclusiveHeight = 34;
+    const catWidth = catHeight * (catLogo.naturalWidth / catLogo.naturalHeight);
+    const inclusiveWidth =
+      inclusiveHeight * (inclusiveLogo.naturalWidth / inclusiveLogo.naturalHeight);
+    const boxWidth = Math.ceil(catWidth + gap + inclusiveWidth + padding * 2);
+    const boxHeight = Math.ceil(Math.max(catHeight, inclusiveHeight) + padding * 2);
+    const x = 16;
+    const y = 16;
+
+    ctx.save();
+    ctx.fillStyle = "rgba(245, 245, 245, 0.92)";
+    ctx.beginPath();
+    drawRoundedRect(ctx, x, y, boxWidth, boxHeight, 8);
+    ctx.fill();
+
+    ctx.drawImage(catLogo, x + padding, y + (boxHeight - catHeight) / 2, catWidth, catHeight);
+    ctx.drawImage(
+      inclusiveLogo,
+      x + padding + catWidth + gap,
+      y + (boxHeight - inclusiveHeight) / 2,
+      inclusiveWidth,
+      inclusiveHeight
+    );
+    ctx.restore();
+  } catch (err) {
+    console.warn("Logo rendering skipped during screenshot export", err);
+  }
+};
+
 const drawRing = (ctx, map, ring) => {
   if (!Array.isArray(ring) || ring.length === 0) return;
   const first = map.latLngToContainerPoint([ring[0][1], ring[0][0]]);
@@ -475,6 +525,7 @@ const exportMapLayer = async ({
     );
   }
 
+  await renderExportLogos(canvas);
   await renderLegend(canvas, mapViewport, rect, resultMetadata);
 
   const blob = await canvasToBlob(canvas);
