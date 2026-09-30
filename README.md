@@ -59,7 +59,7 @@ NEXT_PUBLIC_CARTO_BASEMAP_KEY=your-carto-basemap-api-key
 
 ### Supabase Setup
 
-To run the project with your own database, create a free project in the [Supabase Dashboard](https://supabase.com/dashboard). Each Supabase project includes a PostgreSQL database. Once the project is created, use the **SQL Editor** (`SQL Editor -> New Query`) to run the SQL scripts provided in this repository. If the project uses spatial data, enable the **PostGIS** extension under `Database -> Extensions -> postgis`. Database connection details can be found by clicking **Connect** at the top of the project dashboard; copy the appropriate PostgreSQL connection string and use it in your application or database client. For more information, see the official Supabase documentation on [connecting to PostgreSQL](https://supabase.com/docs/guides/database/connecting-to-postgres) and [PostGIS](https://supabase.com/docs/guides/database/extensions/postgis).
+To run the project with your own database, create a free project in the [Supabase Dashboard](https://supabase.com/dashboard). Each Supabase project includes a PostgreSQL database.  If the project uses spatial data, enable the **PostGIS** extension under `Database -> Extensions -> postgis`. Database connection details can be found by clicking **Connect** at the top of the project dashboard; copy the appropriate PostgreSQL connection string and use it in your application or database client. For more information, see the official Supabase documentation on [connecting to PostgreSQL](https://supabase.com/docs/guides/database/connecting-to-postgres) and [PostGIS](https://supabase.com/docs/guides/database/extensions/postgis).
 
 For a detailed guide on how to correctly prepare city data and upload it to Supabase via QGIS, see [How to add a new city - detailed guide](./How_to_add_new_city_DETAIL_English.pdf).
 
@@ -269,7 +269,7 @@ http://localhost:3000/api/accessibility?city=munich&lat=48.1372&lon=11.5756&time
 
 ## 7) Adding a new city (ops checklist)
 
-This checklist assumes that the city routing tables and optional source datasets have already been loaded into Supabase/PostgreSQL. Database preparation details belong in `Database_instruction.pdf`; this section covers application wiring.
+This checklist assumes that the city routing tables and optional source datasets have already been loaded into Supabase/PostgreSQL. Database preparation details belong in `Database_instruction.pdf` and [How_to_add_new_city_DETAIL_English.pdf](./How_to_add_new_city_DETAIL_English.pdf). This section covers frontend adjustment.
 
 ### A) Verify Supabase routing tables
 
